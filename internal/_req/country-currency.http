@@ -1,0 +1,14 @@
+@proto = http
+@hostname = localhost:8081
+@basepath = /api/v1/country-currency
+@baseurl = {{proto}}://{{hostname}}{{basepath}}
+@contentType = application/json
+
+### CountryCurrencySelect
+
+@page = 15
+@size = 10
+@order = name
+GET {{baseurl}}?page={{page}}&size={{size}}&order={{order}} HTTP/1.1
+Content-Type: {{contentType}}
+

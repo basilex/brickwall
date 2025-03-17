@@ -1,0 +1,41 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bsp-api
+    image: brickwall/bsp:0.1.0
+    command: "/app/bsp api"
+    ports:
+      - "8081:8081"
+    networks:
+      - bspnet
+    env_file:
+      - .env.pgsql
+      - .env.redis
+      - .env.nats
+      - .env.cors
+      - .env.jwt
+      - .env.ssl
+      - .env.api
+      - .env
+
+  # auth:
+  #   build:
+  #     context: ./auth
+  #     dockerfile: Dockerfile
+  #   container_name: bsp-auth
+  #   command: "/app/bsp auth"
+  #   ports:
+  #     - "8082:8082"
+  #   env_file:
+  #     - .env.auth
+  #     - .env.nats
+  #     - .env
+
+networks:
+  bspnet:
+    driver: bridge
+#
+# eof
+#
