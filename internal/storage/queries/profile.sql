@@ -11,6 +11,11 @@ select *
  order by @sql_order::text
  limit @sql_limit offset @sql_offset;
 
+-- name: IsUserProfileExists :one
+select case when exists (
+    select * from profile p where p.user_id = @user_id
+) then cast(1 as bit) else cast(0 as bit) end;
+
 -- name: ProfileSelectByID :one
 select * from profile p where p.id = @id;
 

@@ -11,6 +11,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const isUserProfileExists = `-- name: IsUserProfileExists :one
+select case when exists (
+    select id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at from profile p where p.user_id = $1
+) then cast(1 as bit) else cast(0 as bit) end
+`
+
+// IsUserProfileExists
+//
+//	select case when exists (
+//	    select id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at from profile p where p.user_id = $1
+//	) then cast(1 as bit) else cast(0 as bit) end
+func (q *Queries) IsUserProfileExists(ctx context.Context, userID string) (pgtype.Bits, error) {
+	row := q.db.QueryRow(ctx, isUserProfileExists, userID)
+	var column_1 pgtype.Bits
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const profileDeleteByID = `-- name: ProfileDeleteByID :one
 delete from profile p where p.id = $1 returning id
 `
