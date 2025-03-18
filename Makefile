@@ -26,29 +26,47 @@ ldflags += -X main.Staging=$(staging)
 ldflags += -X main.Githash=$(githash)
 ldflags += -X main.Gobuild=$(gobuild)
 ldflags += -X main.Compile=$(compile)
-
+#
+# Service section
+#
 all: build
 
 build:
 	@go build -a -ldflags="$(ldflags)" -o $(svc) main.go
-
 up:
 	@docker compose up --build --force-recreate
-
 down:
 	@docker compose down  --remove-orphans
-
 clean:
 	@docker rm -v $(shell docker ps --filter status=exited -q)
 	@docker rmi $(img)
-
 prune:
 	@docker system prune -f
-
 tidy:
 	@go mod tidy
-
-.PHONY: all build up down clean prune tidy
+#
+# Storage section
+#
+storage_gen:
+	@make -C internal/storage gen
+storage_up:
+	@make -C internal/storage up
+storage_up1:
+	@make -C internal/storage up1
+storage_down:
+	@make -C internal/storage down
+storage_down1:
+	@make -C internal/storage down1
+storage_drop:
+	@make -C internal/storage drop
+storage_version:
+	@make -C internal/storage version
+#
+# PHONY section
+#
+.PHONY: all \
+	build up down clean prune tidy \
+	storage_gen storage up storage_up1 storage_down storage_down1 storage_drop storage_version
 #
 # eof
 #
