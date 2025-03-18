@@ -3,10 +3,10 @@ package common
 type KeyString string
 
 const (
-	KeyServiceManager KeyString = "key-service-manager"
-
 	KeyCommand  KeyString = "key-command"
 	KeyMetadata KeyString = "key-metadata"
+
+	KeyServiceManager KeyString = "key-service-manager"
 
 	KeyValidatorProvider KeyString = "key-validator-provider"
 	KeyRouterProvider    KeyString = "key-router-provider"

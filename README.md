@@ -6,7 +6,7 @@ Platform of the RESTful API microservices platform.
 
 0. External servies
 
-Install postgres, res, nuts locally or obtain the appropriate connections.
+Install postgres, redis, nats locally or obtain the appropriate connections.
 
 1. Database initialization
 
@@ -19,7 +19,7 @@ In the root of the project check the corresponding command in the Makefile.
 
 You've to 'make up' or 'make down' to start or stop the docker compose microservice containers.
 
-PS: Project is in the active development so no concrete instructinons. Just hack:)
+PS: Project is in the active development so no concrete instructions or stable structure.
 PS2: I'm promise - this readme will be extended, depending of the stage of the development process.
 
 Good luck!
