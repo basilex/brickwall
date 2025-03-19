@@ -9,6 +9,20 @@ import (
 	"context"
 )
 
+const roleCount = `-- name: RoleCount :one
+select count(*) from role
+`
+
+// RoleCount
+//
+//	select count(*) from role
+func (q *Queries) RoleCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, roleCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const roleDeleteByID = `-- name: RoleDeleteByID :one
 delete from role where id = $1 returning id
 `

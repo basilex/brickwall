@@ -1,6 +1,9 @@
 -- name: RoleNew :one
 insert into role(name) values(@name) returning *;
 
+-- name: RoleCount :one
+select count(*) from role;
+
 -- name: RoleSelect :many
 select *
   from role r

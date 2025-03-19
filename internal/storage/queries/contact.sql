@@ -5,6 +5,12 @@ insert into Contact(
     @user_id, @class, @content
 ) returning *;
 
+-- name: ContactCount :one
+select count(*) from contact;
+
+-- name: ContactCountByUserID :one
+select count(*) from contact where user_id = @user_id;
+
 -- name: ContactSelect :many
 select *
   from contact p

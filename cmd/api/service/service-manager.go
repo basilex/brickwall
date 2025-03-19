@@ -12,6 +12,7 @@ import (
 type IServiceManager interface {
 	AuxService() IAuxService
 	AuthService() IAuthService
+	RoleService() IRoleService
 	CountryService() ICountryService
 	CurrencyService() ICurrencyService
 }
@@ -22,6 +23,7 @@ type ServiceManager struct {
 
 	auxService      IAuxService
 	authService     IAuthService
+	roleService     IRoleService
 	countryService  ICountryService
 	currencyService ICurrencyService
 }
@@ -37,6 +39,7 @@ func NewServiceManager(ctx context.Context) IServiceManager {
 
 		auxService:      NewAuxService(ctx, queries),
 		authService:     NewAuthService(ctx, queries),
+		roleService:     NewRoleService(ctx, queries),
 		countryService:  NewCountryService(ctx, queries),
 		currencyService: NewCurrencyService(ctx, queries),
 	}
@@ -48,6 +51,10 @@ func (rcv *ServiceManager) AuxService() IAuxService {
 
 func (rcv *ServiceManager) AuthService() IAuthService {
 	return rcv.authService
+}
+
+func (rcv *ServiceManager) RoleService() IRoleService {
+	return rcv.roleService
 }
 
 func (rcv *ServiceManager) CountryService() ICountryService {

@@ -5,6 +5,9 @@ insert into profile(
     @user_id, @firstname, @lastname, @gender, @birthday, @avatar_url, @enable_2fa, @secret_2fa
 ) returning *;
 
+-- name: ProfileCount :one
+select count(*) from profile;
+
 -- name: ProfileSelect :many
 select *
   from profile p

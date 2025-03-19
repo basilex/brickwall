@@ -9,6 +9,34 @@ import (
 	"context"
 )
 
+const contactCount = `-- name: ContactCount :one
+select count(*) from contact
+`
+
+// ContactCount
+//
+//	select count(*) from contact
+func (q *Queries) ContactCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, contactCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const contactCountByUserID = `-- name: ContactCountByUserID :one
+select count(*) from contact where user_id = $1
+`
+
+// ContactCountByUserID
+//
+//	select count(*) from contact where user_id = $1
+func (q *Queries) ContactCountByUserID(ctx context.Context, userID string) (int64, error) {
+	row := q.db.QueryRow(ctx, contactCountByUserID, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const contactDeleteByID = `-- name: ContactDeleteByID :one
 delete from users u where u.id = $1 returning id
 `

@@ -5,6 +5,9 @@ insert into users(
     @username, @password
 ) returning *;
 
+-- name: UserCount :one
+select count(*) from users;
+
 -- name: UserSelect :many
 select *
   from users u

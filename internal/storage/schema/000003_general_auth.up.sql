@@ -51,7 +51,7 @@ insert into role(name) values
 --
 create table profile (
     id              varchar(32)     not null default xid() primary key,
-    user_id         varchar(32)     not null unique references users(id) on delete restrict,
+    user_id         varchar(32)     not null unique references users(id) on delete cascade,
     firstname       varchar(255)    not null,
     lastname        varchar(255)    not null,
     gender          varchar(32)     not null default 'unknown' check(gender in('unknown', 'male', 'female')),

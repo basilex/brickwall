@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const profileCount = `-- name: ProfileCount :one
+select count(*) from profile
+`
+
+// ProfileCount
+//
+//	select count(*) from profile
+func (q *Queries) ProfileCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, profileCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const profileDeleteByID = `-- name: ProfileDeleteByID :one
 delete from profile p where p.id = $1 returning id
 `
