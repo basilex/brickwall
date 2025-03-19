@@ -7,15 +7,17 @@ package dbs
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const userDeleteByID = `-- name: UserDeleteByID :one
-delete from users u where u.id = $1 returning id
+delete from users where id = $1 returning id
 `
 
 // UserDeleteByID
 //
-//	delete from users u where u.id = $1 returning id
+//	delete from users where id = $1 returning id
 func (q *Queries) UserDeleteByID(ctx context.Context, id string) (string, error) {
 	row := q.db.QueryRow(ctx, userDeleteByID, id)
 	err := row.Scan(&id)
@@ -119,6 +121,192 @@ select id, username, password, is_blocked, is_checked, blocked_at, checked_at, v
 //	select id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at from users u where u.id = $1
 func (q *Queries) UserSelectByID(ctx context.Context, id string) (*User, error) {
 	row := q.db.QueryRow(ctx, userSelectByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.IsBlocked,
+		&i.IsChecked,
+		&i.BlockedAt,
+		&i.CheckedAt,
+		&i.VisitedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const userSelectByUsername = `-- name: UserSelectByUsername :one
+select id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at from users u where u.username = $1
+`
+
+// UserSelectByUsername
+//
+//	select id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at from users u where u.username = $1
+func (q *Queries) UserSelectByUsername(ctx context.Context, username string) (*User, error) {
+	row := q.db.QueryRow(ctx, userSelectByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.IsBlocked,
+		&i.IsChecked,
+		&i.BlockedAt,
+		&i.CheckedAt,
+		&i.VisitedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const userUpdateCheckedAtByID = `-- name: UserUpdateCheckedAtByID :one
+update users
+   set checked_at = $1 where id = $2 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+`
+
+type UserUpdateCheckedAtByIDParams struct {
+	CheckedAt pgtype.Timestamp `json:"checked_at"`
+	ID        string           `json:"id"`
+}
+
+// UserUpdateCheckedAtByID
+//
+//	update users
+//	   set checked_at = $1 where id = $2 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+func (q *Queries) UserUpdateCheckedAtByID(ctx context.Context, arg *UserUpdateCheckedAtByIDParams) (*User, error) {
+	row := q.db.QueryRow(ctx, userUpdateCheckedAtByID, arg.CheckedAt, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.IsBlocked,
+		&i.IsChecked,
+		&i.BlockedAt,
+		&i.CheckedAt,
+		&i.VisitedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const userUpdateCredentialsByID = `-- name: UserUpdateCredentialsByID :one
+update users
+   set username = $1, password = $2 where id = $3 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+`
+
+type UserUpdateCredentialsByIDParams struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	ID       string `json:"id"`
+}
+
+// UserUpdateCredentialsByID
+//
+//	update users
+//	   set username = $1, password = $2 where id = $3 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+func (q *Queries) UserUpdateCredentialsByID(ctx context.Context, arg *UserUpdateCredentialsByIDParams) (*User, error) {
+	row := q.db.QueryRow(ctx, userUpdateCredentialsByID, arg.Username, arg.Password, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.IsBlocked,
+		&i.IsChecked,
+		&i.BlockedAt,
+		&i.CheckedAt,
+		&i.VisitedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const userUpdateIsBlockedByID = `-- name: UserUpdateIsBlockedByID :one
+update users
+   set is_blocked = $1 where id = $2 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+`
+
+type UserUpdateIsBlockedByIDParams struct {
+	IsBlocked bool   `json:"is_blocked"`
+	ID        string `json:"id"`
+}
+
+// UserUpdateIsBlockedByID
+//
+//	update users
+//	   set is_blocked = $1 where id = $2 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+func (q *Queries) UserUpdateIsBlockedByID(ctx context.Context, arg *UserUpdateIsBlockedByIDParams) (*User, error) {
+	row := q.db.QueryRow(ctx, userUpdateIsBlockedByID, arg.IsBlocked, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.IsBlocked,
+		&i.IsChecked,
+		&i.BlockedAt,
+		&i.CheckedAt,
+		&i.VisitedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const userUpdateIsCheckedByID = `-- name: UserUpdateIsCheckedByID :one
+update users
+   set is_checked = $1 where id = $2 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+`
+
+type UserUpdateIsCheckedByIDParams struct {
+	IsChecked bool   `json:"is_checked"`
+	ID        string `json:"id"`
+}
+
+// UserUpdateIsCheckedByID
+//
+//	update users
+//	   set is_checked = $1 where id = $2 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+func (q *Queries) UserUpdateIsCheckedByID(ctx context.Context, arg *UserUpdateIsCheckedByIDParams) (*User, error) {
+	row := q.db.QueryRow(ctx, userUpdateIsCheckedByID, arg.IsChecked, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.IsBlocked,
+		&i.IsChecked,
+		&i.BlockedAt,
+		&i.CheckedAt,
+		&i.VisitedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const userUpdateVisitedAtByID = `-- name: UserUpdateVisitedAtByID :one
+update users
+   set visited_at = $1 where id = $2 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+`
+
+type UserUpdateVisitedAtByIDParams struct {
+	VisitedAt pgtype.Timestamp `json:"visited_at"`
+	ID        string           `json:"id"`
+}
+
+// UserUpdateVisitedAtByID
+//
+//	update users
+//	   set visited_at = $1 where id = $2 returning id, username, password, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
+func (q *Queries) UserUpdateVisitedAtByID(ctx context.Context, arg *UserUpdateVisitedAtByIDParams) (*User, error) {
+	row := q.db.QueryRow(ctx, userUpdateVisitedAtByID, arg.VisitedAt, arg.ID)
 	var i User
 	err := row.Scan(
 		&i.ID,

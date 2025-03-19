@@ -11,24 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const isUserProfileExists = `-- name: IsUserProfileExists :one
-select case when exists (
-    select id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at from profile p where p.user_id = $1
-) then cast(1 as bit) else cast(0 as bit) end
-`
-
-// IsUserProfileExists
-//
-//	select case when exists (
-//	    select id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at from profile p where p.user_id = $1
-//	) then cast(1 as bit) else cast(0 as bit) end
-func (q *Queries) IsUserProfileExists(ctx context.Context, userID string) (pgtype.Bits, error) {
-	row := q.db.QueryRow(ctx, isUserProfileExists, userID)
-	var column_1 pgtype.Bits
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
 const profileDeleteByID = `-- name: ProfileDeleteByID :one
 delete from profile p where p.id = $1 returning id
 `
@@ -40,6 +22,24 @@ func (q *Queries) ProfileDeleteByID(ctx context.Context, id string) (string, err
 	row := q.db.QueryRow(ctx, profileDeleteByID, id)
 	err := row.Scan(&id)
 	return id, err
+}
+
+const profileIsExists = `-- name: ProfileIsExists :one
+select case when exists (
+    select id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at from profile p where p.user_id = $1
+) then cast(1 as bit) else cast(0 as bit) end
+`
+
+// ProfileIsExists
+//
+//	select case when exists (
+//	    select id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at from profile p where p.user_id = $1
+//	) then cast(1 as bit) else cast(0 as bit) end
+func (q *Queries) ProfileIsExists(ctx context.Context, userID string) (pgtype.Bits, error) {
+	row := q.db.QueryRow(ctx, profileIsExists, userID)
+	var column_1 pgtype.Bits
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const profileNew = `-- name: ProfileNew :one
@@ -182,6 +182,121 @@ select id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2f
 //	select id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at from profile p where p.user_id = $1
 func (q *Queries) ProfileSelectByUserID(ctx context.Context, id string) (*Profile, error) {
 	row := q.db.QueryRow(ctx, profileSelectByUserID, id)
+	var i Profile
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Firstname,
+		&i.Lastname,
+		&i.Gender,
+		&i.Birthday,
+		&i.AvatarUrl,
+		&i.Enable2fa,
+		&i.Secret2fa,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const profileUpdate2FAById = `-- name: ProfileUpdate2FAById :one
+update profile
+   set enable_2fa = $1, secret_2fa = $2
+ where id = $3 returning id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at
+`
+
+type ProfileUpdate2FAByIdParams struct {
+	Enable2fa bool        `json:"enable_2fa"`
+	Secret2fa pgtype.Text `json:"secret_2fa"`
+	ID        string      `json:"id"`
+}
+
+// ProfileUpdate2FAById
+//
+//	update profile
+//	   set enable_2fa = $1, secret_2fa = $2
+//	 where id = $3 returning id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at
+func (q *Queries) ProfileUpdate2FAById(ctx context.Context, arg *ProfileUpdate2FAByIdParams) (*Profile, error) {
+	row := q.db.QueryRow(ctx, profileUpdate2FAById, arg.Enable2fa, arg.Secret2fa, arg.ID)
+	var i Profile
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Firstname,
+		&i.Lastname,
+		&i.Gender,
+		&i.Birthday,
+		&i.AvatarUrl,
+		&i.Enable2fa,
+		&i.Secret2fa,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const profileUpdateAvatarUrlById = `-- name: ProfileUpdateAvatarUrlById :one
+update profile
+   set avatar_url = $1
+ where id = $2 returning id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at
+`
+
+type ProfileUpdateAvatarUrlByIdParams struct {
+	AvatarUrl string `json:"avatar_url"`
+	ID        string `json:"id"`
+}
+
+// ProfileUpdateAvatarUrlById
+//
+//	update profile
+//	   set avatar_url = $1
+//	 where id = $2 returning id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at
+func (q *Queries) ProfileUpdateAvatarUrlById(ctx context.Context, arg *ProfileUpdateAvatarUrlByIdParams) (*Profile, error) {
+	row := q.db.QueryRow(ctx, profileUpdateAvatarUrlById, arg.AvatarUrl, arg.ID)
+	var i Profile
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Firstname,
+		&i.Lastname,
+		&i.Gender,
+		&i.Birthday,
+		&i.AvatarUrl,
+		&i.Enable2fa,
+		&i.Secret2fa,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const profileUpdateCommonById = `-- name: ProfileUpdateCommonById :one
+update profile
+   set firstname = $1, lastname = $2, gender = $3, birthday = $4
+ where id = $5 returning id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at
+`
+
+type ProfileUpdateCommonByIdParams struct {
+	Firstname string      `json:"firstname"`
+	Lastname  string      `json:"lastname"`
+	Gender    string      `json:"gender"`
+	Birthday  pgtype.Date `json:"birthday"`
+	ID        string      `json:"id"`
+}
+
+// ProfileUpdateCommonById
+//
+//	update profile
+//	   set firstname = $1, lastname = $2, gender = $3, birthday = $4
+//	 where id = $5 returning id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at
+func (q *Queries) ProfileUpdateCommonById(ctx context.Context, arg *ProfileUpdateCommonByIdParams) (*Profile, error) {
+	row := q.db.QueryRow(ctx, profileUpdateCommonById,
+		arg.Firstname,
+		arg.Lastname,
+		arg.Gender,
+		arg.Birthday,
+		arg.ID,
+	)
 	var i Profile
 	err := row.Scan(
 		&i.ID,
