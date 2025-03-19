@@ -203,3 +203,34 @@ func (q *Queries) ContactSelectByUserIDClass(ctx context.Context, arg *ContactSe
 	}
 	return items, nil
 }
+
+const contactUpdateByID = `-- name: ContactUpdateByID :one
+update contact
+   set class = $1, content = $2
+ where id = $3 returning id, user_id, class, content, created_at, updated_at
+`
+
+type ContactUpdateByIDParams struct {
+	Class   string `json:"class"`
+	Content string `json:"content"`
+	ID      string `json:"id"`
+}
+
+// ContactUpdateByID
+//
+//	update contact
+//	   set class = $1, content = $2
+//	 where id = $3 returning id, user_id, class, content, created_at, updated_at
+func (q *Queries) ContactUpdateByID(ctx context.Context, arg *ContactUpdateByIDParams) (*Contact, error) {
+	row := q.db.QueryRow(ctx, contactUpdateByID, arg.Class, arg.Content, arg.ID)
+	var i Contact
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Class,
+		&i.Content,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}

@@ -23,5 +23,10 @@ select * from contact p
    and p.class = @class
    and p.content = @content;
 
+-- name: ContactUpdateByID :one
+update contact
+   set class = @class, content = @content
+ where id = @id returning *;
+
 -- name: ContactDeleteByID :one
 delete from users u where u.id = @id returning id;
