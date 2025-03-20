@@ -129,6 +129,7 @@ func (rcv *CurrencyController) CurrencyDeleteByID(c *gin.Context) {
 	)
 }
 
+// Business operations
 func (rcv *CurrencyController) CurrencyCountrySelect(c *gin.Context) {
 	qry := &exchange.CurrencyQuery{}
 

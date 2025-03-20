@@ -12,6 +12,7 @@ import (
 
 type IAuxController interface {
 	common.IController
+
 	Index(*gin.Context)
 	Health(*gin.Context)
 	Metadata(*gin.Context)

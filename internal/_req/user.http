@@ -1,0 +1,12 @@
+@proto = http
+@hostname = localhost:8081
+@basepath = /api/v1/user
+@baseurl = {{proto}}://{{hostname}}{{basepath}}
+@contentType = application/json
+
+### UserSelect
+@page = 1
+@size = 10
+@order = username
+GET {{baseurl}}?page={{page}}&size={{size}}&order={{order}} HTTP/1.1
+Content-Type: {{contentType}}

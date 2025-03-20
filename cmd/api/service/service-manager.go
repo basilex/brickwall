@@ -11,6 +11,7 @@ import (
 
 type IServiceManager interface {
 	AuxService() IAuxService
+	UserService() IUserService
 	AuthService() IAuthService
 	RoleService() IRoleService
 	CountryService() ICountryService

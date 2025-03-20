@@ -8,7 +8,7 @@ create table country (
     iso3        char(3)         not null unique, -- ISO 3166-1 Alpha-3
     num_code    smallint        not null unique, -- ISO 3166-1 Numeric
     created_at  timestamp       not null default timezone('utc', now()),
-    updated_at  timestamp       not null default timezone('utc', now())
+    updated_at  timestamp       not null default '1000-01-01'::timestamp
 );
 
 create trigger country_updated_at
@@ -24,7 +24,7 @@ create table currency (
     num_code    smallint        not null unique,
     symbol      varchar(8)      not null default '-',
     created_at  timestamp       not null default timezone('utc', now()),
-    updated_at  timestamp       not null default timezone('utc', now())
+    updated_at  timestamp       not null default '1000-01-01'::timestamp
 );
 
 create trigger currency_updated_at
@@ -38,7 +38,7 @@ create table country_currency (
     country_id  varchar(32)     not null references country(id) on delete cascade,
     currency_id varchar(32)     not null references currency(id) on delete cascade,
     created_at  timestamp       not null default timezone('utc', now()),
-    updated_at  timestamp       not null default timezone('utc', now())
+    updated_at  timestamp       not null default '1000-01-01'::timestamp
 );
 
 create unique index country_currency_unq on country_currency(country_id, currency_id);

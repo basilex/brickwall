@@ -27,46 +27,50 @@ ldflags += -X main.Githash=$(githash)
 ldflags += -X main.Gobuild=$(gobuild)
 ldflags += -X main.Compile=$(compile)
 #
+# Main entry point
+#
+all:
+	@echo '*** Help will be implemented a little bit soon'
+	@exit 0
+#
 # Service section
 #
-all: build
-
-build:
+api-build:
 	@go build -a -ldflags="$(ldflags)" -o $(svc) main.go
-up:
+api-up:
 	@docker compose up --build --force-recreate
-down:
+api-down:
 	@docker compose down  --remove-orphans
-clean:
+api-clean:
 	@docker rm -v $(shell docker ps --filter status=exited -q)
 	@docker rmi $(img)
-prune:
+api-prune:
 	@docker system prune -f
-tidy:
+api-tidy:
 	@go mod tidy
 #
-# Storage section
+# Dbs section
 #
-storage_gen:
+dbs-gen:
 	@make -C internal/storage gen
-storage_up:
+dbs-up:
 	@make -C internal/storage up
-storage_up1:
+dbs-up1:
 	@make -C internal/storage up1
-storage_down:
+dbs-down:
 	@make -C internal/storage down
-storage_down1:
+dbs-down1:
 	@make -C internal/storage down1
-storage_drop:
+dbs-drop:
 	@make -C internal/storage drop
-storage_version:
+dbs-version:
 	@make -C internal/storage version
 #
 # PHONY section
 #
 .PHONY: all \
 	build up down clean prune tidy \
-	storage_gen storage up storage_up1 storage_down storage_down1 storage_drop storage_version
+	dbs-gen dbs-up dbs-up1 dbs-down dbs-down1 dbs-drop dbs-version
 #
 # eof
 #

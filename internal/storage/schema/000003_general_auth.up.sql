@@ -7,13 +7,14 @@ create table users (
     password        varchar(255)    not null,
 
     is_blocked      bool            not null default false,
+    blocked_at      timestamp       not null default '1000-01-01'::timestamp,
+ 
     is_checked      bool            not null default false,
+    checked_at      timestamp       not null default '1000-01-01'::timestamp,
 
-    blocked_at      timestamp,
-    checked_at      timestamp,
-    visited_at      timestamp,
+    visited_at      timestamp       not null default '1000-01-01'::timestamp,
     created_at      timestamp       not null default timezone('utc', now()),
-    updated_at      timestamp
+    updated_at      timestamp       not null default '1000-01-01'::timestamp
 );
 
 create trigger users_updated_at
@@ -31,7 +32,7 @@ create table role (
     id              varchar(32)     not null default xid() primary key,
     name            varchar(255)    not null unique,
     created_at      timestamp       not null default timezone('utc', now()),
-    updated_at      timestamp
+    updated_at      timestamp       not null default '1000-01-01'::timestamp
 );
 
 create trigger users_updated_at
@@ -60,7 +61,7 @@ create table profile (
     enable_2fa      bool            not null default false,
     secret_2fa      varchar(255),
     created_at      timestamp       not null default timezone('utc', now()),
-    updated_at      timestamp
+    updated_at      timestamp       not null default '1000-01-01'::timestamp
 );
 
 create trigger profile_updated_at
@@ -89,7 +90,7 @@ create table contact (
     class           varchar(32)     not null check(class in ('email', 'phone', 'mobile', 'telegram', 'viber', 'signal')),
     content         varchar(255)    not null,
     created_at      timestamp       not null default timezone('utc', now()),
-    updated_at      timestamp
+    updated_at      timestamp       not null default '1000-01-01'::timestamp
 );
 
 create index contact_user_id on contact(user_id);

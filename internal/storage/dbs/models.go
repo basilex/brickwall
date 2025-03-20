@@ -71,8 +71,8 @@ type User struct {
 	Username  string           `json:"username"`
 	Password  string           `json:"password"`
 	IsBlocked bool             `json:"is_blocked"`
-	IsChecked bool             `json:"is_checked"`
 	BlockedAt pgtype.Timestamp `json:"blocked_at"`
+	IsChecked bool             `json:"is_checked"`
 	CheckedAt pgtype.Timestamp `json:"checked_at"`
 	VisitedAt pgtype.Timestamp `json:"visited_at"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`

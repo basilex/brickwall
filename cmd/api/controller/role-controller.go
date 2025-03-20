@@ -26,14 +26,14 @@ type IRoleController interface {
 type RoleController struct {
 	ctx         context.Context
 	group       *gin.RouterGroup
-	RoleService service.IRoleService
+	roleService service.IRoleService
 }
 
 func NewRoleController(ctx context.Context, grp *gin.RouterGroup) IRoleController {
 	serviceManager := ctx.Value(common.KeyServiceManager).(service.IServiceManager)
 
 	return &RoleController{
-		ctx: ctx, group: grp, RoleService: serviceManager.RoleService(),
+		ctx: ctx, group: grp, roleService: serviceManager.RoleService(),
 	}
 }
 
@@ -53,7 +53,7 @@ func (rcv *RoleController) RoleNew(c *gin.Context) {
 		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrReqBindJson, err)))
 		return
 	}
-	res, err := rcv.RoleService.RoleNew(req)
+	res, err := rcv.roleService.RoleNew(req)
 	if err != nil {
 		c.JSON(common.ErrMapper(err))
 		return
@@ -68,7 +68,7 @@ func (rcv *RoleController) RoleSelect(c *gin.Context) {
 		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrReqBindJson, err)))
 		return
 	}
-	res, pag, err := rcv.RoleService.RoleSelect(c, qry)
+	res, pag, err := rcv.roleService.RoleSelect(c, qry)
 	if err != nil {
 		c.JSON(common.ErrMapper(err))
 		return
@@ -85,7 +85,7 @@ func (rcv *RoleController) RoleSelectByID(c *gin.Context) {
 		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrReqBindJson, err)))
 		return
 	}
-	res, err := rcv.RoleService.RoleSelectByID(uri.ID)
+	res, err := rcv.roleService.RoleSelectByID(uri.ID)
 	if err != nil {
 		c.JSON(common.ErrMapper(err))
 		return
@@ -100,7 +100,7 @@ func (rcv *RoleController) RoleUpdateByID(c *gin.Context) {
 		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrReqBindJson, err)))
 		return
 	}
-	res, err := rcv.RoleService.RoleUpdateByID(req)
+	res, err := rcv.roleService.RoleUpdateByID(req)
 	if err != nil {
 		c.JSON(common.ErrMapper(err))
 		return
@@ -115,7 +115,7 @@ func (rcv *RoleController) RoleDeleteByID(c *gin.Context) {
 		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrReqBindJson, err)))
 		return
 	}
-	if err := rcv.RoleService.RoleDeleteByID(uri.ID); err != nil {
+	if err := rcv.roleService.RoleDeleteByID(uri.ID); err != nil {
 		c.JSON(common.ErrMapper(err))
 		return
 	}

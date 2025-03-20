@@ -8,9 +8,13 @@ type UserUriID struct {
 	ID string `uri:"id" binding:"required,max=32,alphanum"`
 }
 
+type UserUriUsername struct {
+	Username string `uri:"username" binding:"required,max=64,alphanum"`
+}
+
 type UserNewReq struct {
-	Username string `json:"name" binding:"required,max=64"`
-	Password string `json:"password" binding:"required,max=255"`
+	Username string `json:"username" binding:"required,max=64"`
+	Password string `json:"password" binding:"required,max=72"`
 }
 
 type UserUpdateCredentialsReq struct {
@@ -37,5 +41,5 @@ type UserUpdateVisitedAtByIDReq struct {
 type UserQuery struct {
 	Page  int    `form:"page" binding:"required,min=1,numeric"`
 	Size  int    `form:"size" binding:"required,min=5,max=100,numeric"`
-	Order string `form:"order" binding:"omitempty,oneof=id name iso2 iso3 num_code"`
+	Order string `form:"order" binding:"omitempty,oneof=id username is_blocked blocked_at is_checked checked_at visited_at created_at updated_at"`
 }

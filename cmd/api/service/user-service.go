@@ -17,15 +17,17 @@ import (
 
 type IUserService interface {
 	// CRUD operations
-	UserNew(*exchange.UserNewReq) (*dbs.User, error)
-	UserSelect(*gin.Context, *exchange.UserQuery) ([]*dbs.User, *utils.PaginatorResources, error)
-	UserSelectByID(string) (*dbs.User, error)
-	UserSelectByUsername(string) (*dbs.User, error)
-	UserUpdateCredentialsByID(*exchange.UserUpdateCredentialsReq) (*dbs.User, error)
-	UserUpdateIsBlockedByID(*exchange.UserUpdateIsBlockedByIDReq) (*dbs.User, error)
-	UserUpdateIsCheckedByID(*exchange.UserUpdateIsCheckedByIDReq) (*dbs.User, error)
-	UserUpdateVisitedAtByID(*exchange.UserUpdateVisitedAtByIDReq) (*dbs.User, error)
+	UserNew(*exchange.UserNewReq) (*dbs.UserNewRow, error)
+	UserSelect(*gin.Context, *exchange.UserQuery) ([]*dbs.UserSelectRow, *utils.PaginatorResources, error)
+	UserSelectByID(string) (*dbs.UserSelectByIDRow, error)
+	UserSelectByUsername(string) (*dbs.UserSelectByUsernameRow, error)
 	UserDeleteByID(string) error
+
+	// Business operations
+	UserUpdateCredentialsByID(*exchange.UserUpdateCredentialsReq) (*dbs.UserUpdateCredentialsByIDRow, error)
+	UserUpdateIsBlockedByID(*exchange.UserUpdateIsBlockedByIDReq) (*dbs.UserUpdateIsBlockedByIDRow, error)
+	UserUpdateIsCheckedByID(*exchange.UserUpdateIsCheckedByIDReq) (*dbs.UserUpdateIsCheckedByIDRow, error)
+	UserUpdateVisitedAtByID(*exchange.UserUpdateVisitedAtByIDReq) (*dbs.UserUpdateVisitedAtByIDRow, error)
 }
 
 type UserService struct {
@@ -37,7 +39,7 @@ func NewUserService(ctx context.Context, queries *dbs.Queries) IUserService {
 	return &UserService{ctx: ctx, queries: queries}
 }
 
-func (rcv *UserService) UserNew(req *exchange.UserNewReq) (*dbs.User, error) {
+func (rcv *UserService) UserNew(req *exchange.UserNewReq) (*dbs.UserNewRow, error) {
 	passwordCrypted, _ := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
 
 	res, err := rcv.queries.UserNew(context.Background(), &dbs.UserNewParams{
@@ -50,7 +52,7 @@ func (rcv *UserService) UserNew(req *exchange.UserNewReq) (*dbs.User, error) {
 	return res, nil
 }
 
-func (rcv *UserService) UserSelect(c *gin.Context, qry *exchange.UserQuery) ([]*dbs.User, *utils.PaginatorResources, error) {
+func (rcv *UserService) UserSelect(c *gin.Context, qry *exchange.UserQuery) ([]*dbs.UserSelectRow, *utils.PaginatorResources, error) {
 	count, err := rcv.queries.UserCount(context.Background())
 	if err != nil {
 		return nil, nil, fmt.Errorf("%w: %v", common.ErrDBRecordCount, err)
@@ -74,7 +76,7 @@ func (rcv *UserService) UserSelect(c *gin.Context, qry *exchange.UserQuery) ([]*
 	return res, pag, nil
 }
 
-func (rcv *UserService) UserSelectByID(req string) (*dbs.User, error) {
+func (rcv *UserService) UserSelectByID(req string) (*dbs.UserSelectByIDRow, error) {
 	res, err := rcv.queries.UserSelectByID(context.Background(), req)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -86,7 +88,7 @@ func (rcv *UserService) UserSelectByID(req string) (*dbs.User, error) {
 	return res, nil
 }
 
-func (rcv *UserService) UserSelectByUsername(req string) (*dbs.User, error) {
+func (rcv *UserService) UserSelectByUsername(req string) (*dbs.UserSelectByUsernameRow, error) {
 	res, err := rcv.queries.UserSelectByUsername(context.Background(), req)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -98,7 +100,7 @@ func (rcv *UserService) UserSelectByUsername(req string) (*dbs.User, error) {
 	return res, nil
 }
 
-func (rcv *UserService) UserUpdateCredentialsByID(req *exchange.UserUpdateCredentialsReq) (*dbs.User, error) {
+func (rcv *UserService) UserUpdateCredentialsByID(req *exchange.UserUpdateCredentialsReq) (*dbs.UserUpdateCredentialsByIDRow, error) {
 	passwordCrypted, _ := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
 
 	params := &dbs.UserUpdateCredentialsByIDParams{
@@ -115,7 +117,7 @@ func (rcv *UserService) UserUpdateCredentialsByID(req *exchange.UserUpdateCreden
 	return res, nil
 }
 
-func (rcv *UserService) UserUpdateIsBlockedByID(req *exchange.UserUpdateIsBlockedByIDReq) (*dbs.User, error) {
+func (rcv *UserService) UserUpdateIsBlockedByID(req *exchange.UserUpdateIsBlockedByIDReq) (*dbs.UserUpdateIsBlockedByIDRow, error) {
 	params := &dbs.UserUpdateIsBlockedByIDParams{
 		ID:        req.ID,
 		IsBlocked: req.IsBlocked,
@@ -131,7 +133,7 @@ func (rcv *UserService) UserUpdateIsBlockedByID(req *exchange.UserUpdateIsBlocke
 	return res, nil
 }
 
-func (rcv *UserService) UserUpdateIsCheckedByID(req *exchange.UserUpdateIsCheckedByIDReq) (*dbs.User, error) {
+func (rcv *UserService) UserUpdateIsCheckedByID(req *exchange.UserUpdateIsCheckedByIDReq) (*dbs.UserUpdateIsCheckedByIDRow, error) {
 	params := &dbs.UserUpdateIsCheckedByIDParams{
 		ID:        req.ID,
 		IsChecked: req.IsChecked,
@@ -147,7 +149,7 @@ func (rcv *UserService) UserUpdateIsCheckedByID(req *exchange.UserUpdateIsChecke
 	return res, nil
 }
 
-func (rcv *UserService) UserUpdateVisitedAtByID(req *exchange.UserUpdateVisitedAtByIDReq) (*dbs.User, error) {
+func (rcv *UserService) UserUpdateVisitedAtByID(req *exchange.UserUpdateVisitedAtByIDReq) (*dbs.UserUpdateVisitedAtByIDRow, error) {
 	params := &dbs.UserUpdateVisitedAtByIDParams{
 		ID:        req.ID,
 		VisitedAt: req.VisitedAt,
