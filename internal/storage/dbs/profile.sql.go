@@ -25,19 +25,6 @@ func (q *Queries) ProfileCount(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const profileDeleteByID = `-- name: ProfileDeleteByID :one
-delete from profile p where p.id = $1 returning id
-`
-
-// ProfileDeleteByID
-//
-//	delete from profile p where p.id = $1 returning id
-func (q *Queries) ProfileDeleteByID(ctx context.Context, id string) (string, error) {
-	row := q.db.QueryRow(ctx, profileDeleteByID, id)
-	err := row.Scan(&id)
-	return id, err
-}
-
 const profileIsExists = `-- name: ProfileIsExists :one
 select case when exists (
     select id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at from profile p where p.user_id = $1

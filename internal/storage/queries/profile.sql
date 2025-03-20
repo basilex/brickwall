@@ -39,6 +39,3 @@ update profile
 select case when exists (
     select * from profile p where p.user_id = @user_id
 ) then cast(1 as bit) else cast(0 as bit) end;
-
--- name: ProfileDeleteByID :one
-delete from profile p where p.id = @id returning id;

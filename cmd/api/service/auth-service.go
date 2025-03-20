@@ -17,6 +17,7 @@ type AuthService struct {
 	ctx     context.Context
 	queries *dbs.Queries
 
+	// user  IUserService
 	twoFA provider.I2FAProvider
 }
 
