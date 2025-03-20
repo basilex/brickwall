@@ -14,7 +14,7 @@ COPY . .
 COPY .git .git
 
 RUN go mod tidy
-RUN make build
+RUN make api-build
 RUN strip bsp
 
 FROM debian:12.9-slim

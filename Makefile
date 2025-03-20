@@ -30,8 +30,13 @@ ldflags += -X main.Compile=$(compile)
 # Main entry point
 #
 all:
-	@echo '*** Help will be implemented a little bit soon'
+	@echo '*** Help will be implemented later'
 	@exit 0
+#
+# Swagger section
+#
+api-docs:
+	swag init
 #
 # Service section
 #
@@ -69,7 +74,8 @@ dbs-version:
 # PHONY section
 #
 .PHONY: all \
-	build up down clean prune tidy \
+	api-docs
+	api-up api-down api-clean api-prune api-tidy \
 	dbs-gen dbs-up dbs-up1 dbs-down dbs-down1 dbs-drop dbs-version
 #
 # eof

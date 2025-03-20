@@ -1,0 +1,43 @@
+info:
+  contact: {}
+paths:
+  /aux:
+    get:
+      consumes:
+      - application/json
+      description: Return the platformm greetings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Greetings
+      tags:
+      - aux
+  /aux/health:
+    get:
+      consumes:
+      - application/json
+      description: Checks the health
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Health check
+      tags:
+      - aux
+  /aux/metadata:
+    get:
+      consumes:
+      - application/json
+      description: Obtain the binary metadata
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Binary metadata
+      tags:
+      - aux
+swagger: "2.0"

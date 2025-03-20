@@ -313,6 +313,11 @@ func Command(ctx context.Context) *cli.Command {
 	return command
 }
 
+// @title       Brickwall API
+// @version     0.1.0
+// @description This is Brickwall RestAPI
+// @host        localhost:8081
+// @BasePath    /api/v1
 func bootstrap(ctx context.Context) error {
 	//
 	// Service Logger - no dependencies

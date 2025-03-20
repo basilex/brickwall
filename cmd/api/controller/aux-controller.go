@@ -38,14 +38,35 @@ func (rcv *AuxController) Register() {
 	rcv.group.GET("/aux/metadata", rcv.Metadata)
 }
 
+// @Summary     Greetings
+// @Description Return the platformm greetings
+// @Tags        aux
+// @Accept      json
+// @Produce     json
+// @Success     200
+// @Router      /aux [get]
 func (rcv *AuxController) Index(c *gin.Context) {
 	c.JSON(http.StatusOK, common.NewResponse(rcv.auxService.Index()))
 }
 
+// @Summary     Health check
+// @Description Checks the health
+// @Tags        aux
+// @Accept      json
+// @Produce     json
+// @Success     200
+// @Router      /aux/health [get]
 func (rcv *AuxController) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, common.NewResponse(rcv.auxService.Health()))
 }
 
+// @Summary     Binary metadata
+// @Description Obtain the binary metadata
+// @Tags        aux
+// @Accept      json
+// @Produce     json
+// @Success     200
+// @Router      /aux/metadata [get]
 func (rcv *AuxController) Metadata(c *gin.Context) {
 	c.JSON(http.StatusOK, common.NewResponse(rcv.auxService.Metadata()))
 }
