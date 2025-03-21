@@ -24,7 +24,7 @@ create trigger users_updated_at
 insert into users(username, password, is_checked) values
     ('sys', crypt('passw!rd', gen_salt('bf', 12)), true),
     ('admin', crypt('passw0rd', gen_salt('bf', 12)), true),
-    ('basilex', crypt('passw-rd', gen_salt('bf', 12)), true);
+    ('alexander.vasilenko@gmail.com', crypt('passw-rd', gen_salt('bf', 12)), true);
 --
 -- Entity role
 --
@@ -78,7 +78,7 @@ begin
     select id into v_user_id from users where username = 'admin';
     insert into profile(user_id, firstname, lastname) values(v_user_id, 'System', 'Administrator');
 
-    select id into v_user_id from users where username = 'basilex';
+    select id into v_user_id from users where username = 'alexander.vasilenko@gmail.com';
     insert into profile(user_id, firstname, lastname, gender, birthday) values(v_user_id, 'Alexander', 'Vasilenko', 'male', '1965-04-03'::date);
 end $$;
 --
@@ -111,7 +111,20 @@ do $$
 declare
     v_user_id users.id%type;
 begin
-    select id into v_user_id from users where username = 'basilex';
+    --
+    -- sys contacts
+    --
+    select id into v_user_id from users where username = 'sys';
+    insert into contact(user_id, class, content) values(v_user_id, 'email', 'sys@brickwall.com');
+    --
+    -- admin contacts
+    --
+    select id into v_user_id from users where username = 'admin';
+    insert into contact(user_id, class, content) values(v_user_id, 'email', 'admin@brickwall.com');
+    --
+    -- alexander.vasilenko@gmail.com contacts
+    --
+    select id into v_user_id from users where username = 'alexander.vasilenko@gmail.com';
 
     insert into contact(user_id, class, content) values(v_user_id, 'email', 'alexander.vasilenko@gmail.com');
     insert into contact(user_id, class, content) values(v_user_id, 'email', 'alexander.vasilenko@icloud.com');

@@ -45,41 +45,27 @@ func (q *Queries) ProfileIsExists(ctx context.Context, userID string) (pgtype.Bi
 
 const profileNew = `-- name: ProfileNew :one
 insert into profile(
-    user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa
+    user_id, firstname, lastname
 ) values(
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3
 ) returning id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at
 `
 
 type ProfileNewParams struct {
-	UserID    string      `json:"user_id"`
-	Firstname string      `json:"firstname"`
-	Lastname  string      `json:"lastname"`
-	Gender    string      `json:"gender"`
-	Birthday  pgtype.Date `json:"birthday"`
-	AvatarUrl string      `json:"avatar_url"`
-	Enable2fa bool        `json:"enable_2fa"`
-	Secret2fa pgtype.Text `json:"secret_2fa"`
+	UserID    string `json:"user_id"`
+	Firstname string `json:"firstname"`
+	Lastname  string `json:"lastname"`
 }
 
 // ProfileNew
 //
 //	insert into profile(
-//	    user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa
+//	    user_id, firstname, lastname
 //	) values(
-//	    $1, $2, $3, $4, $5, $6, $7, $8
+//	    $1, $2, $3
 //	) returning id, user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa, created_at, updated_at
 func (q *Queries) ProfileNew(ctx context.Context, arg *ProfileNewParams) (*Profile, error) {
-	row := q.db.QueryRow(ctx, profileNew,
-		arg.UserID,
-		arg.Firstname,
-		arg.Lastname,
-		arg.Gender,
-		arg.Birthday,
-		arg.AvatarUrl,
-		arg.Enable2fa,
-		arg.Secret2fa,
-	)
+	row := q.db.QueryRow(ctx, profileNew, arg.UserID, arg.Firstname, arg.Lastname)
 	var i Profile
 	err := row.Scan(
 		&i.ID,

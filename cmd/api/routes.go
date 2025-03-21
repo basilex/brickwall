@@ -24,6 +24,7 @@ func RegisterRoutes(ctx context.Context, router provider.IRouterProvider) {
 
 			// API controllers
 			controller.NewAuxController(ctx, v1).Register()
+			controller.NewAuthController(ctx, v1).Register()
 			controller.NewUserController(ctx, v1).Register()
 			controller.NewRoleController(ctx, v1).Register()
 			controller.NewCountryController(ctx, v1).Register()

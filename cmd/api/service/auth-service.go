@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"brickwall/cmd/api/exchange"
@@ -16,9 +17,8 @@ import (
 type IAuthService interface {
 	Signup(*exchange.AuthSignupReq) (*dbs.UserNewRow, error)
 	Signin(*exchange.AuthSigninReq) (*dbs.UserSelectRow, error)
-	Signout() bool
+	Signout() (bool, error)
 }
-
 type AuthService struct {
 	ctx     context.Context
 	queries *dbs.Queries
@@ -37,6 +37,7 @@ func NewAuthService(ctx context.Context, queries *dbs.Queries) IAuthService {
 
 func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, error) {
 	ctx := context.Background()
+
 	// begin new transaction
 	trx, err := rcv.pgxProvider.Pool().BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
@@ -48,16 +49,18 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 		}
 	}()
 	qtx := rcv.queries.WithTx(trx)
+
 	// create user
 	passwordCrypted, _ := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
 
 	user, err := qtx.UserNew(context.Background(), &dbs.UserNewParams{
-		Username: req.Username,
+		Username: req.Email,
 		Password: string(passwordCrypted),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrDBRecordInsert, err)
 	}
+
 	// create contact email
 	_, err = qtx.ContactNew(ctx, &dbs.ContactNewParams{
 		UserID: user.ID, Class: "email", Content: req.Email,
@@ -68,12 +71,16 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 	// create default profile
 	_, err = qtx.ProfileNew(ctx, &dbs.ProfileNewParams{
 		UserID:    user.ID,
-		Firstname: "-",
-		Lastname:  "-",
+		Firstname: req.Firstname,
+		Lastname:  req.Lastname,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrDBRecordInsert, err)
 	}
+
+	// send an verification email
+	// TODO: should be implemented
+
 	// commit transaction
 	if err := trx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrDBTrxError, err)
@@ -82,11 +89,11 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 }
 
 func (rcv *AuthService) Signin(*exchange.AuthSigninReq) (*dbs.UserSelectRow, error) {
-	return nil, nil
+	return nil, fmt.Errorf("%w: %v", common.ErrNotImplemented, errors.New("Auth.Signin()"))
 }
 
-func (rcv *AuthService) Signout() bool {
-	return true
+func (rcv *AuthService) Signout() (bool, error) {
+	return true, fmt.Errorf("%w: %v", common.ErrNotImplemented, errors.New("Auth.Signout()"))
 }
 
 // --------------------------------------------------------------------------------------

@@ -6,8 +6,11 @@ import (
 )
 
 var (
+	// common
+	ErrNotImplemented = errors.New("not implemented")
+
 	// Request layer errors
-	ErrReqBindJson = errors.New("")
+	ErrReqBindJson = errors.New("failed to bind json")
 
 	// Database layer errors
 	ErrDBConnPoolExhausted = errors.New("failed to acquire connection")

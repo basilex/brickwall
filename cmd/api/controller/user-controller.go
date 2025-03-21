@@ -16,7 +16,6 @@ type IUserController interface {
 	common.IController
 
 	// CRUD operations
-	UserNew(*gin.Context)
 	UserSelect(*gin.Context)
 	UserSelectByID(*gin.Context)
 	UserSelectByUsername(*gin.Context)
@@ -44,28 +43,12 @@ func NewUserController(ctx context.Context, grp *gin.RouterGroup) IUserControlle
 
 func (rcv *UserController) Register() {
 	// CRUD operations
-	rcv.group.POST("/user", rcv.UserNew)
 	rcv.group.GET("/user", rcv.UserSelect)
 	rcv.group.GET("/user/:id", rcv.UserSelectByID)
 	rcv.group.PUT("/user/section/credentials", rcv.UserUpdateCredentialsByID)
 	rcv.group.PUT("/user/section/is_blocked", rcv.UserUpdateIsBlockedByID)
 	rcv.group.PUT("/user/section/is_checked", rcv.UserUpdateIsCheckedByID)
 	rcv.group.DELETE("/user/:id", rcv.UserDeleteByID)
-}
-
-func (rcv *UserController) UserNew(c *gin.Context) {
-	req := &exchange.UserNewReq{}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrReqBindJson, err)))
-		return
-	}
-	res, err := rcv.userService.UserNew(req)
-	if err != nil {
-		c.JSON(common.ErrMapper(err))
-		return
-	}
-	c.JSON(http.StatusCreated, common.NewResponse(res))
 }
 
 func (rcv *UserController) UserSelect(c *gin.Context) {
