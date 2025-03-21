@@ -37,11 +37,11 @@ type JwtProvider struct {
 
 func NewJwtProvider(ctx context.Context) IJwtProvider {
 	cli := ctx.Value(common.KeyCommand).(*cli.Command)
-	redis := ctx.Value(common.KeyRedisProvider).(*redis.Client)
+	redis := ctx.Value(common.KeyRedisProvider).(IRedisProvider)
 
 	return &JwtProvider{
 		ctx:               ctx,
-		redis:             redis,
+		redis:             redis.Client(),
 		secret:            cli.String("jwt-secret"),
 		accessExpiration:  cli.Duration("jwt-access-expiration"),
 		refreshExpiration: cli.Duration("jwt-refresh-expiration"),

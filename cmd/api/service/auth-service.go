@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"brickwall/cmd/api/exchange"
 	"brickwall/internal/common"
@@ -11,7 +10,6 @@ import (
 	"brickwall/internal/storage/dbs"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,15 +23,14 @@ type AuthService struct {
 	ctx     context.Context
 	queries *dbs.Queries
 
-	pgxProvider   *pgxpool.Pool
+	pgxProvider   provider.IPgxProvider
 	twoFAProvider provider.I2FAProvider
 }
 
 func NewAuthService(ctx context.Context, queries *dbs.Queries) IAuthService {
-	slog.Debug(">>>", "pgx", ctx.Value(common.KeyPgxProvider).(*pgxpool.Pool))
 	return &AuthService{
 		ctx:           ctx,
-		pgxProvider:   ctx.Value(common.KeyPgxProvider).(*pgxpool.Pool),
+		pgxProvider:   ctx.Value(common.KeyPgxProvider).(provider.IPgxProvider),
 		twoFAProvider: ctx.Value(common.Key2FAProvider).(provider.I2FAProvider),
 	}
 }
@@ -41,7 +38,7 @@ func NewAuthService(ctx context.Context, queries *dbs.Queries) IAuthService {
 func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, error) {
 	ctx := context.Background()
 	// begin new transaction
-	trx, err := rcv.pgxProvider.BeginTx(ctx, pgx.TxOptions{})
+	trx, err := rcv.pgxProvider.Pool().BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrDBTrxError, err)
 	}

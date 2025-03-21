@@ -3,9 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"brickwall/internal/common"
+	"brickwall/internal/provider"
 	"brickwall/internal/storage/dbs"
 )
 
@@ -19,7 +18,6 @@ type IServiceManager interface {
 }
 type ServiceManager struct {
 	ctx     context.Context
-	pool    *pgxpool.Pool
 	queries *dbs.Queries
 
 	auxService      IAuxService
@@ -31,12 +29,11 @@ type ServiceManager struct {
 }
 
 func NewServiceManager(ctx context.Context) IServiceManager {
-	pool := ctx.Value(common.KeyPgxProvider).(*pgxpool.Pool)
-	queries := dbs.New(pool)
+	pgxProvider := ctx.Value(common.KeyPgxProvider).(provider.IPgxProvider)
+	queries := dbs.New(pgxProvider.Pool())
 
 	return &ServiceManager{
 		ctx:     ctx,
-		pool:    pool,
 		queries: queries,
 
 		auxService:      NewAuxService(ctx, queries),

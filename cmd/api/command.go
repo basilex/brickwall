@@ -320,57 +320,57 @@ func Command(ctx context.Context) *cli.Command {
 // @BasePath    /api/v1
 func bootstrap(ctx context.Context) error {
 	//
-	// Service Logger - no dependencies
+	// Logger provider - no dependencies
 	//
 	slog.SetDefault(
 		slog.New(slog.NewTextHandler(os.Stdout, nil)),
 	)
 	//
-	// Service Redis - no dependencies
+	// Redis provider - no dependencies
 	//
-	redis, err := provider.NewRedisProvider(ctx).Open()
-	if err != nil {
+	redisProvider := provider.NewRedisProvider(ctx)
+	if _, err := redisProvider.Open(); err != nil {
 		return err
 	}
-	ctx = context.WithValue(ctx, common.KeyRedisProvider, redis)
-	defer redis.Close()
+	ctx = context.WithValue(ctx, common.KeyRedisProvider, redisProvider)
+	defer redisProvider.Close()
 	//
-	// Service Pgx - no dependencies
+	// Pgx provider - no dependencies
 	//
-	pgx, err := provider.NewPgxProvider(ctx).Open()
-	if err != nil {
+	pgxProvider := provider.NewPgxProvider(ctx)
+	if _, err := pgxProvider.Open(); err != nil {
 		return err
 	}
-	ctx = context.WithValue(ctx, common.KeyPgxProvider, pgx)
-	defer pgx.Close()
+	ctx = context.WithValue(ctx, common.KeyPgxProvider, pgxProvider)
+	defer pgxProvider.Close()
 	//
-	// Service Jwt - depends on Redis
+	// Jwt provider - depends on Redis
 	//
-	jwt := provider.NewJwtProvider(ctx)
-	ctx = context.WithValue(ctx, common.KeyJwtProvider, jwt)
+	jwtProvider := provider.NewJwtProvider(ctx)
+	ctx = context.WithValue(ctx, common.KeyJwtProvider, jwtProvider)
 	//
-	// Service twoFA - no dependencies
+	// twoFA provider - no dependencies
 	//
-	twoFA := provider.New2FAProvider()
-	ctx = context.WithValue(ctx, common.Key2FAProvider, twoFA)
+	twoFAProvider := provider.New2FAProvider()
+	ctx = context.WithValue(ctx, common.Key2FAProvider, twoFAProvider)
 	//
-	// Service Router - no dependencies
+	// Router provider - no dependencies
 	//
-	router := provider.NewRouterProvider(ctx).Init()
-	ctx = context.WithValue(ctx, common.KeyRouterProvider, router)
+	routerProvider := provider.NewRouterProvider(ctx).Init()
+	ctx = context.WithValue(ctx, common.KeyRouterProvider, routerProvider)
 	//
 	// Service Manager - depends on pgx and sqlc storage.queries
 	//
-	manager := service.NewServiceManager(ctx)
-	ctx = context.WithValue(ctx, common.KeyServiceManager, manager)
+	serviceManager := service.NewServiceManager(ctx)
+	ctx = context.WithValue(ctx, common.KeyServiceManager, serviceManager)
 	//
 	// Service Validator - no dependencies
 	//
 	validator := validator.New()
 	ctx = context.WithValue(ctx, common.KeyValidatorProvider, validator)
 
-	RegisterRoutes(ctx, router)
-	srv := provider.NewServerProvider(ctx).Startup(router)
+	RegisterRoutes(ctx, routerProvider)
+	srv := provider.NewServerProvider(ctx).Startup(routerProvider)
 	defer srv.Shutdown()
 
 	provider.NewWatcherProvider().Catch()
