@@ -39,7 +39,7 @@ func (rcv *AuxController) Register() {
 }
 
 // @Summary     Greetings
-// @Description Return the platformm greetings
+// @Description Return the platform greetings
 // @Tags        aux
 // @Accept      json
 // @Produce     json

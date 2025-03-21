@@ -1,8 +1,8 @@
 -- name: ProfileNew :one
 insert into profile(
-    user_id, firstname, lastname, gender, birthday, avatar_url, enable_2fa, secret_2fa
+    user_id, firstname, lastname
 ) values(
-    @user_id, @firstname, @lastname, @gender, @birthday, @avatar_url, @enable_2fa, @secret_2fa
+    @user_id, @firstname, @lastname
 ) returning *;
 
 -- name: ProfileCount :one

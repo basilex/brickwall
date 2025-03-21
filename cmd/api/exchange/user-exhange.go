@@ -13,14 +13,14 @@ type UserUriUsername struct {
 }
 
 type UserNewReq struct {
-	Username string `json:"username" binding:"required,max=64"`
-	Password string `json:"password" binding:"required,max=72"`
+	Username string `json:"username" binding:"required,min=1,max=64"`
+	Password string `json:"password" binding:"required,min=4,max=72"`
 }
 
 type UserUpdateCredentialsReq struct {
 	ID       string `json:"id" binding:"required,max=32"`
-	Username string `json:"username" binding:"required,max=64"`
-	Password string `json:"password" binding:"required,max=72"`
+	Username string `json:"username" binding:"required,min=1,max=64"`
+	Password string `json:"password" binding:"required,min=4,max=72"`
 }
 
 type UserUpdateIsBlockedByIDReq struct {

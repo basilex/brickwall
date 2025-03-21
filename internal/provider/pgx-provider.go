@@ -12,7 +12,7 @@ import (
 
 type IPgxProvider interface {
 	Open() (*pgxpool.Pool, error)
-	Stat() *pgxpool.Stat
+	Pool() *pgxpool.Pool
 	Ping() error
 	Close()
 }
@@ -58,8 +58,8 @@ func (rcv *PgxProvider) Open() (*pgxpool.Pool, error) {
 	return rcv.pool, nil
 }
 
-func (rcv *PgxProvider) Stat() *pgxpool.Stat {
-	return rcv.pool.Stat()
+func (rcv *PgxProvider) Pool() *pgxpool.Pool {
+	return rcv.pool
 }
 
 func (rcv *PgxProvider) Ping() error {
