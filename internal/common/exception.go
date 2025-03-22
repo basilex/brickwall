@@ -25,7 +25,13 @@ var (
 	ErrDBRecordUpdate = errors.New("failed to update record(s)")
 	ErrDBRecordDelete = errors.New("failed to delete record(s)")
 
-	// Auth/jwt layer errors
+	// Auth layer errors
+	ErrAuthInvalidPassword = errors.New("invalid password")
+	ErrAuthGenerateTokens  = errors.New("failed to generate tokens")
+	ErrAuthUserBlocked     = errors.New("user blocked")
+	ErrAuthUserNotChecked  = errors.New("user not checked")
+
+	// Auth JWT layer errors
 	ErrJwtTokenInvalid     = errors.New("invalid token")
 	ErrJwtTokenSigning     = errors.New("signing token")
 	ErrJwtTokenClaims      = errors.New("invalid claims")
@@ -80,6 +86,15 @@ func ErrMapper(err error) (int, *Exception) {
 		return http.StatusNotAcceptable, NewException(http.StatusNotAcceptable, err.Error())
 	case errors.Is(err, ErrDBRecordDelete):
 		return http.StatusNotAcceptable, NewException(http.StatusNotAcceptable, err.Error())
+
+	case errors.Is(err, ErrAuthInvalidPassword):
+		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())
+	case errors.Is(err, ErrAuthGenerateTokens):
+		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
+	case errors.Is(err, ErrAuthUserBlocked):
+		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())
+	case errors.Is(err, ErrAuthUserNotChecked):
+		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())
 
 	case errors.Is(err, ErrJwtTokenInvalid):
 		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())

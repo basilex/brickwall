@@ -37,6 +37,7 @@ func (rcv *RouterProvider) Init() IRouterProvider {
 
 	rcv.engine = gin.Default()
 	rcv.engine.Use(cors(rcv.ctx))
+
 	return rcv
 }
 

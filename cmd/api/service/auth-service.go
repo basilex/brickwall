@@ -16,7 +16,7 @@ import (
 
 type IAuthService interface {
 	Signup(*exchange.AuthSignupReq) (*dbs.UserNewRow, error)
-	Signin(*exchange.AuthSigninReq) (*dbs.UserSelectRow, error)
+	Signin(*exchange.AuthSigninReq) (*exchange.AuthSigninRes, error)
 	Signout() (bool, error)
 }
 type AuthService struct {
@@ -24,13 +24,16 @@ type AuthService struct {
 	queries *dbs.Queries
 
 	pgxProvider   provider.IPgxProvider
+	jwtProvider   provider.IJwtProvider
 	twoFAProvider provider.I2FAProvider
 }
 
 func NewAuthService(ctx context.Context, queries *dbs.Queries) IAuthService {
 	return &AuthService{
 		ctx:           ctx,
+		queries:       queries,
 		pgxProvider:   ctx.Value(common.KeyPgxProvider).(provider.IPgxProvider),
+		jwtProvider:   ctx.Value(common.KeyJwtProvider).(provider.IJwtProvider),
 		twoFAProvider: ctx.Value(common.Key2FAProvider).(provider.I2FAProvider),
 	}
 }
@@ -88,8 +91,62 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 	return user, nil
 }
 
-func (rcv *AuthService) Signin(*exchange.AuthSigninReq) (*dbs.UserSelectRow, error) {
-	return nil, fmt.Errorf("%w: %v", common.ErrNotImplemented, errors.New("Auth.Signin()"))
+func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthSigninRes, error) {
+	ctx := context.Background()
+
+	// check user password
+	user, err := rcv.queries.AuthSelectUserCredentials(ctx, req.Username)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("%w: %v", common.ErrDBNotFound, err)
+		} else {
+			return nil, fmt.Errorf("%w: %v", common.ErrDBRecordSelect, err)
+		}
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthInvalidPassword, err)
+	}
+
+	// check for blocked or checked statuses
+	if user.IsBlocked {
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthUserBlocked, errors.New("block status detected"))
+	}
+	if !user.IsChecked {
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthUserNotChecked, errors.New("email check required"))
+	}
+
+	// generate tokens
+	accessToken, refreshToken, err := rcv.jwtProvider.GenerateTokens(user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthGenerateTokens, err)
+	}
+
+	// update user visited_at
+	updated, err := rcv.queries.AuthUpdateVisitedAt(ctx, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrDBRecordUpdate, err)
+	}
+
+	// store refresh token in redis
+	if err := rcv.jwtProvider.StoreToken(refreshToken); err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrDBRecordInsert, err)
+	}
+
+	// response about logged in user
+	res := &exchange.AuthSigninRes{
+		User: &exchange.AuthUser{
+			ID:        updated.ID,
+			Username:  updated.Username,
+			CheckedAt: updated.CheckedAt,
+			VisitedAt: updated.VisitedAt,
+			CreatedAt: updated.CreatedAt,
+		},
+		Tokens: &exchange.AuthTokens{
+			Access:  accessToken,
+			Refresh: refreshToken,
+		},
+	}
+	return res, nil
 }
 
 func (rcv *AuthService) Signout() (bool, error) {

@@ -18,6 +18,14 @@ type IAuthController interface {
 	AuthSignup(*gin.Context)
 	AuthSignin(*gin.Context)
 	AuthSignout(*gin.Context)
+
+	AuthRefreshToken(*gin.Context)
+	AuthInvalidateToken(*gin.Context)
+
+	AuthResetPassword(*gin.Context)
+	AuthChangePassword(*gin.Context)
+
+	AuthMe(*gin.Context)
 }
 
 type AuthController struct {
@@ -81,4 +89,19 @@ func (rcv *AuthController) AuthSignout(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, common.NewResponse(ok))
+}
+
+func (rcv *AuthController) AuthRefreshToken(*gin.Context) {
+}
+
+func (rcv *AuthController) AuthInvalidateToken(*gin.Context) {
+}
+
+func (rcv *AuthController) AuthResetPassword(*gin.Context) {
+}
+
+func (rcv *AuthController) AuthChangePassword(*gin.Context) {
+}
+
+func (rcv *AuthController) AuthMe(*gin.Context) {
 }

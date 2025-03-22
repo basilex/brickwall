@@ -12,7 +12,10 @@ import (
 	"brickwall/internal/common"
 )
 
-const TokenIvalid = "invalid"
+const (
+	TokenValid   = "valid"
+	TokenInvalid = "invalid"
+)
 
 type IJwtProvider interface {
 	GenerateTokens(string) (string, string, error)
@@ -20,6 +23,7 @@ type IJwtProvider interface {
 	ValidateToken(string) (*Claims, error)
 	InvalidateToken(string) error
 	IsTokenInvalidated(string) bool
+	StoreToken(string) error
 }
 
 type Claims struct {
@@ -56,7 +60,7 @@ func (rcv *JwtProvider) GenerateTokens(userID string) (string, string, error) {
 			ExpiresAt: jwt.NewNumericDate(AccessExpiration),
 		},
 	})
-	signedAccessToken, err := accessToken.SignedString(rcv.secret)
+	signedAccessToken, err := accessToken.SignedString([]byte(rcv.secret))
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", common.ErrJwtTokenSigning, err)
 	}
@@ -64,7 +68,7 @@ func (rcv *JwtProvider) GenerateTokens(userID string) (string, string, error) {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(refreshExpiration),
 	})
-	signedRefreshToken, err := refreshToken.SignedString(rcv.secret)
+	signedRefreshToken, err := refreshToken.SignedString([]byte(rcv.secret))
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", common.ErrJwtTokenSigning, err)
 	}
@@ -81,7 +85,7 @@ func (rcv *JwtProvider) RefreshTokens(tokenString string) (string, string, error
 
 func (rcv *JwtProvider) ValidateToken(tokenString string) (*Claims, error) {
 	val, err := rcv.redis.Get(context.Background(), tokenString).Result()
-	if err == nil && val == TokenIvalid {
+	if err == nil && val == TokenInvalid {
 		return nil, fmt.Errorf("%w: %v", common.ErrJwtTokenInvalidated, "marked as invalid")
 	}
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
@@ -99,11 +103,21 @@ func (rcv *JwtProvider) ValidateToken(tokenString string) (*Claims, error) {
 
 func (rcv *JwtProvider) InvalidateToken(tokenString string) error {
 	ctx := context.Background()
-	return rcv.redis.Set(ctx, tokenString, TokenIvalid, rcv.accessExpiration).Err()
+	return rcv.redis.Set(ctx, tokenString, TokenInvalid, rcv.accessExpiration).Err()
 }
 
 func (rcv *JwtProvider) IsTokenInvalidated(tokenString string) bool {
 	ctx := context.Background()
 	val, err := rcv.redis.Get(ctx, tokenString).Result()
-	return err == nil && val == TokenIvalid
+	return err == nil && val == TokenInvalid
+}
+
+func (rcv *JwtProvider) StoreToken(tokenString string) error {
+	ctx := context.Background()
+	return rcv.redis.Set(ctx, tokenString, TokenValid, rcv.accessExpiration).Err()
+}
+
+func (rcv *JwtProvider) DeleteToken(tokenString string) error {
+	ctx := context.Background()
+	return rcv.redis.Del(ctx, tokenString).Err()
 }
