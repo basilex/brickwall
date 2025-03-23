@@ -58,7 +58,7 @@ var (
 	defPostgresMaxConnIdleTime   time.Duration = time.Duration(3 * time.Minute)
 	defPostgresHealthCheckPeriod time.Duration = time.Duration(30 * time.Second)
 
-	defRedisAddr       string = "localhost:6379"
+	defRedisAddr       string = "host.docker.internal:6379"
 	defRedisNetwork    string = "tcp"
 	defRedisClientName string = "bsp"
 	defRedisDb         int    = 0
@@ -66,6 +66,14 @@ var (
 	defJwtSecret            string        = "7b22fce240c32115056ba109f035542a3a1f9e1ee62fa653fa0a4ec0e267eb15"
 	defJwtAccessExpiration  time.Duration = time.Duration(15 * time.Minute)
 	defJwtRefreshExpiration time.Duration = time.Duration(24 * time.Hour)
+
+	defSmtpServerHost     string = "host.docker.internal"
+	defSmtpServerPort     int    = 1025
+	defSmtpServerUser     string = "info"
+	defSmtpServerPassword string = "passw0rd"
+	defSmtpSenderFrom     string = "no-replay@brickwall.com"
+	defSmtpTemplates      string = "templates"
+	defSmtpUseTLS         bool   = false
 )
 
 func Command(ctx context.Context) *cli.Command {
@@ -400,6 +408,58 @@ func Command(ctx context.Context) *cli.Command {
 				DefaultText: defJwtRefreshExpiration.String(),
 				Sources:     cli.EnvVars("JWT_REFRESH_EXPIRATION"),
 			},
+			//
+			// SMTP settings
+			//
+			&cli.StringFlag{
+				Name:        "smtp-server-host",
+				Usage:       "SMTP server host",
+				Value:       defSmtpServerHost,
+				DefaultText: "SMTP server host address",
+				Sources:     cli.EnvVars("SMTP_SERVER_HOST"),
+			},
+			&cli.IntFlag{
+				Name:        "smtp-server-port",
+				Usage:       "SMTP server port",
+				Value:       int64(defSmtpServerPort),
+				DefaultText: "SMTP server port number",
+				Sources:     cli.EnvVars("SMTP_SERVER_PORT"),
+			},
+			&cli.StringFlag{
+				Name:        "smtp-server-user",
+				Usage:       "SMTP server user name",
+				Value:       defSmtpServerUser,
+				DefaultText: "SMTP server user name",
+				Sources:     cli.EnvVars("SMTP_SERVER_USER"),
+			},
+			&cli.StringFlag{
+				Name:        "smtp-server-password",
+				Usage:       "SMTP server user password",
+				Value:       defSmtpServerPassword,
+				DefaultText: "SMTP server user password",
+				Sources:     cli.EnvVars("SMTP_SERVER_PASSWORD"),
+			},
+			&cli.StringFlag{
+				Name:        "smtp-sender-from",
+				Usage:       "SMTP sender from address",
+				Value:       defSmtpSenderFrom,
+				DefaultText: "SMTP sender from adddress",
+				Sources:     cli.EnvVars("SMTP_SENDER_FROM"),
+			},
+			&cli.StringFlag{
+				Name:        "smtp-templates",
+				Usage:       "SMTP templates dir",
+				Value:       defSmtpTemplates,
+				DefaultText: "SMTP templates dir",
+				Sources:     cli.EnvVars("SMTP_TEMPLATES"),
+			},
+			&cli.BoolFlag{
+				Name:        "smtp-use-tls",
+				Usage:       "SMTP use TLS",
+				Value:       defSmtpUseTLS,
+				DefaultText: "SMTP use TLS",
+				Sources:     cli.EnvVars("SMTP_USE_TLS"),
+			},
 		},
 	}
 
@@ -461,20 +521,31 @@ func bootstrap(ctx context.Context) error {
 	routerProvider := provider.NewRouterProvider(ctx).Init()
 	ctx = context.WithValue(ctx, common.KeyRouterProvider, routerProvider)
 	//
+	// Validator provider - no dependencies
+	//
+	validator := validator.New()
+	ctx = context.WithValue(ctx, common.KeyValidatorProvider, validator)
+	//
+	// SMTP provider - no dependencies
+	//
+	smtpProvider := provider.NewSmtpProvider(ctx)
+	ctx = context.WithValue(ctx, common.KeySmtpProvider, smtpProvider)
+	//
 	// Service Manager - depends on pgx and sqlc storage.queries
 	//
 	serviceManager := service.NewServiceManager(ctx)
 	ctx = context.WithValue(ctx, common.KeyServiceManager, serviceManager)
 	//
-	// Service Validator - no dependencies
+	// Server provider - no dependencies
+	// Here is HTTP(S) server starts in goroutine
 	//
-	validator := validator.New()
-	ctx = context.WithValue(ctx, common.KeyValidatorProvider, validator)
-
 	RegisterRoutes(ctx, routerProvider)
 	srv := provider.NewServerProvider(ctx).Startup(routerProvider)
 	defer srv.Shutdown()
-
+	//
+	// Watcher provider - no dependencies
+	// Here the app is waiting for the signals to interruption
+	//
 	provider.NewWatcherProvider().Catch()
 	return nil
 }

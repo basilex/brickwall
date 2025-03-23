@@ -43,6 +43,10 @@ var (
 	// Context errors
 	ErrCtxError = errors.New("context error")
 
+	// Email template errors
+	ErrEmailTemplateNotFound  = errors.New("missing template")
+	ErrEmailTemplateRendering = errors.New("failed to render template")
+
 	// Business layer errors
 
 	// Network layer errors
@@ -112,6 +116,11 @@ func ErrMapper(err error) (int, *Exception) {
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
 
 	case errors.Is(err, ErrCtxError):
+		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
+
+	case errors.Is(err, ErrEmailTemplateNotFound):
+		return http.StatusNoContent, NewException(http.StatusNoContent, err.Error())
+	case errors.Is(err, ErrEmailTemplateRendering):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
 	default:
 		return http.StatusInternalServerError, NewException(http.StatusInternalServerError, err.Error())
