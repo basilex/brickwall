@@ -28,3 +28,9 @@ const (
 	// NATS subjects/topics
 	NatsSendRegistrationEmail KeyString = "send.registration.email"
 )
+
+const (
+	// JWT tokens
+	JwtTokenValid   string = "valid"
+	JwtTokenInvalid string = "invalid"
+)

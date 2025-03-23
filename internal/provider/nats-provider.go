@@ -1,12 +1,13 @@
 package provider
 
 import (
-	"brickwall/internal/common"
 	"context"
 	"log/slog"
 
 	"github.com/nats-io/nats.go"
 	"github.com/urfave/cli/v3"
+
+	"brickwall/internal/common"
 )
 
 type INatsProvider interface {
