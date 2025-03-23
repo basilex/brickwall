@@ -11,10 +11,9 @@ import (
 )
 
 type IPgxProvider interface {
-	Open() (*pgxpool.Pool, error)
+	Connect() (*pgxpool.Pool, error)
 	Pool() *pgxpool.Pool
-	Ping() error
-	Close()
+	Disconnect()
 }
 
 type PgxProvider struct {
@@ -26,7 +25,7 @@ func NewPgxProvider(ctx context.Context) IPgxProvider {
 	return &PgxProvider{ctx: ctx}
 }
 
-func (rcv *PgxProvider) Open() (*pgxpool.Pool, error) {
+func (rcv *PgxProvider) Connect() (*pgxpool.Pool, error) {
 	var (
 		err  error
 		conf *pgxpool.Config
@@ -62,10 +61,6 @@ func (rcv *PgxProvider) Pool() *pgxpool.Pool {
 	return rcv.pool
 }
 
-func (rcv *PgxProvider) Ping() error {
-	return rcv.pool.Ping(context.Background())
-}
-
-func (rcv *PgxProvider) Close() {
+func (rcv *PgxProvider) Disconnect() {
 	rcv.pool.Close()
 }

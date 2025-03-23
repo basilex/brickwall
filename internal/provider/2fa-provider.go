@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pquerna/otp/totp"
@@ -15,10 +16,12 @@ type I2FAProvider interface {
 	VerifyCode(string, string) bool
 }
 
-type TwoFAProvider struct{}
+type TwoFAProvider struct {
+	ctx context.Context
+}
 
-func New2FAProvider() I2FAProvider {
-	return &TwoFAProvider{}
+func New2FAProvider(ctx context.Context) I2FAProvider {
+	return &TwoFAProvider{ctx: ctx}
 }
 
 func (rcv *TwoFAProvider) GenerateSecretKey(userEmail string) (string, string, error) {

@@ -10,9 +10,9 @@ import (
 )
 
 type IRedisProvider interface {
-	Open() (*redis.Client, error)
+	Connect() (*redis.Client, error)
 	Client() *redis.Client
-	Close() error
+	Disconnect() error
 }
 
 type RedisProvider struct {
@@ -25,7 +25,7 @@ func NewRedisProvider(ctx context.Context) IRedisProvider {
 
 }
 
-func (rcv *RedisProvider) Open() (*redis.Client, error) {
+func (rcv *RedisProvider) Connect() (*redis.Client, error) {
 	cli := rcv.ctx.Value(common.KeyCommand).(*cli.Command)
 
 	rcv.client = redis.NewClient(
@@ -49,6 +49,6 @@ func (rcv *RedisProvider) Client() *redis.Client {
 	return rcv.client
 }
 
-func (rcv *RedisProvider) Close() error {
+func (rcv *RedisProvider) Disconnect() error {
 	return rcv.client.Close()
 }

@@ -1,68 +1,89 @@
 package provider
 
-// import (
-// 	"brickwall/bsp/internal/common"
-// 	"context"
-// 	"errors"
-// 	"log"
+import (
+	"brickwall/internal/common"
+	"context"
+	"log/slog"
 
-// 	"github.com/nats-io/nats.go"
-// 	"github.com/urfave/cli/v3"
-// )
+	"github.com/nats-io/nats.go"
+	"github.com/urfave/cli/v3"
+)
 
-// type INats interface {
-// 	Connect() error
-// 	Disconnect()
-// 	Connection() *nats.Conn
-// }
+type INatsProvider interface {
+	Connect() (*nats.Conn, error)
+	Connection() *nats.Conn
+	Disconnect()
+}
 
-// type Nats struct {
-// 	ctx  context.Context
-// 	conn *nats.Conn
-// }
+type NatsProvider struct {
+	ctx  context.Context
+	conn *nats.Conn
+}
 
-// func NewNats(ctx context.Context) INats {
-// 	return &Nats{ctx: ctx}
-// }
+func NewNatsProvider(ctx context.Context) INatsProvider {
+	return &NatsProvider{ctx: ctx}
+}
 
-// func (rcv *Nats) Connect() error {
-// 	var err error
+func (rcv *NatsProvider) Connect() (*nats.Conn, error) {
+	var err error
 
-// 	cli := rcv.ctx.Value(common.KeyNats).(*cli.Command)
+	cli := rcv.ctx.Value(common.KeyCommand).(*cli.Command)
 
-// 	connectionName := nats.Name(params.Name)
-// 	connectTimeout := nats.Timeout(params.ConnectTimeout)
-// 	reconnectWait := nats.ReconnectWait(params.ReconnectWait)
-// 	pingInterval := nats.PingInterval(params.PingInterval)
-// 	maxPingsOut := nats.MaxPingsOutstanding(params.MaxPingsOut)
+	options := []nats.Option{
+		nats.MaxReconnects(int(cli.Int("nats-max-reconnect"))),
+		nats.ReconnectWait(cli.Duration("nats-reconnect-wait")),
+		nats.ReconnectJitter(cli.Duration("nats-reconnect-jitter"), cli.Duration("nats-reconnect-jitter-tls")),
+		nats.Timeout(cli.Duration("nats-timeout")),
+		nats.PingInterval(cli.Duration("nats-ping-interval")),
+		nats.MaxPingsOutstanding(int(cli.Int("nats-max-ping-out"))),
+		nats.ReconnectBufSize(int(cli.Int("nats-reconnect-buf-size"))),
+		nats.DrainTimeout(cli.Duration("nats-drain-timeout")),
+		nats.FlusherTimeout(cli.Duration("nats-flusher-timeout")),
 
-// 	disconnectErrHandler := nats.DisconnectErrHandler(
-// 		func(nc *nats.Conn, err error) {
-// 			if !nc.IsClosed() {
-// 				log.Printf("bus: disconnected due to: %s, will attempt reconnects for %.0fm", err, params.ConnectTimeout.Seconds())
-// 			}
-// 		})
-// 	reconnectHandler := nats.ReconnectHandler(
-// 		func(nc *nats.Conn) {
-// 			log.Printf("bus: reconnected [%s]", nc.ConnectedUrl())
-// 		})
-// 	if rcv.conn, err = nats.Connect(
-// 		params.ConnectURL,
-// 		connectionName, connectTimeout, reconnectWait, pingInterval, maxPingsOut,
-// 		disconnectErrHandler, reconnectHandler,
-// 	); err != nil {
-// 		return err
-// 	}
-// 	if rcv.conn.Status() != nats.CONNECTED {
-// 		return errors.New("unable to establish failed")
-// 	}
-// 	return nil
-// }
+		nats.DisconnectErrHandler(
+			func(nc *nats.Conn, err error) {
+				if !nc.IsClosed() {
+					slog.Error(
+						"nats",
+						"error", err,
+						"reconnects for", cli.Duration("nats-reconnect-wait"),
+					)
+				}
+			},
+		),
+		nats.ReconnectHandler(
+			func(nc *nats.Conn) {
+				slog.Warn(
+					"nats",
+					"reconnected", nc.ConnectedUrl(),
+				)
+			},
+		),
+		nats.ErrorHandler(
+			func(c *nats.Conn, s *nats.Subscription, err error) {
+				slog.Error(
+					"nats",
+					"error", err,
+					"subscription", s.Subject,
+				)
+			},
+		),
+		nats.ClosedHandler(
+			func(nc *nats.Conn) {
+				slog.Info("nats: connection closed")
+			},
+		),
+	}
+	if rcv.conn, err = nats.Connect(cli.String("nats-url"), options...); err != nil {
+		return nil, err
+	}
+	return rcv.conn, nil
+}
 
-// func (rcv *Nats) Disconnect() {
-// 	rcv.conn.Close()
-// }
+func (rcv *NatsProvider) Connection() *nats.Conn {
+	return rcv.conn
+}
 
-// func (rcv *Nats) Connection() *nats.Conn {
-// 	return rcv.conn
-// }
+func (rcv *NatsProvider) Disconnect() {
+	rcv.conn.Close()
+}

@@ -40,6 +40,9 @@ var (
 	// 2FA layer errors
 	Err2FAKeyGeneration = errors.New("failed to generate key")
 
+	// Context errors
+	ErrCtxError = errors.New("context error")
+
 	// Business layer errors
 
 	// Network layer errors
@@ -106,6 +109,9 @@ func ErrMapper(err error) (int, *Exception) {
 		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())
 
 	case errors.Is(err, Err2FAKeyGeneration):
+		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
+
+	case errors.Is(err, ErrCtxError):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
 	default:
 		return http.StatusInternalServerError, NewException(http.StatusInternalServerError, err.Error())

@@ -150,6 +150,12 @@ func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthSigni
 }
 
 func (rcv *AuthService) Signout() (bool, error) {
+	// TODO: this value located in gin.Context
+	refreshToken := rcv.ctx.Value(common.KeyCtxRefreshToken)
+	if refreshToken == nil {
+		return false, fmt.Errorf("%w: %v", common.ErrCtxError, errors.New("refresh token not found"))
+	}
+	rcv.jwtProvider.DeleteToken(refreshToken.(string))
 	return true, fmt.Errorf("%w: %v", common.ErrNotImplemented, errors.New("Auth.Signout()"))
 }
 

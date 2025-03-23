@@ -24,6 +24,7 @@ type IJwtProvider interface {
 	InvalidateToken(string) error
 	IsTokenInvalidated(string) bool
 	StoreToken(string) error
+	DeleteToken(string) error
 }
 
 type Claims struct {

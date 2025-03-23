@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/nats-io/nats.go"
 	"github.com/urfave/cli/v3"
 
 	"brickwall/cmd/api/service"
@@ -33,6 +34,18 @@ var (
 	defCorsExposeHeaders    string = "*"
 	defCorsAllowCredentials bool   = false
 	defCorsMaxAge           int    = 300
+
+	defNatsURL                string        = nats.DefaultURL
+	defNatsMaxReconnect       int           = nats.DefaultMaxReconnect
+	defNatsReconnectWait      time.Duration = nats.DefaultReconnectWait
+	defNatsReconnectJitter    time.Duration = nats.DefaultReconnectJitter
+	defNatsReconnectJitterTLS time.Duration = nats.DefaultReconnectJitterTLS
+	defNatsTimeout            time.Duration = nats.DefaultTimeout
+	defNatsPingInterval       time.Duration = nats.DefaultPingInterval
+	defNatsMaxPingOut         int           = nats.DefaultMaxPingOut
+	defNatsReconnectBufSize   int           = nats.DefaultReconnectBufSize
+	defNatsDrainTimeout       time.Duration = nats.DefaultDrainTimeout
+	defNatsFlusherTimeout     time.Duration = nats.DefaultFlusherTimeout
 
 	defPostgresDb                string        = "bsp_dev"
 	defPostgresHost              string        = "host.docker.internal"
@@ -140,6 +153,86 @@ func Command(ctx context.Context) *cli.Command {
 				Value:       int64(defCorsMaxAge),
 				DefaultText: strconv.FormatInt(int64(defCorsMaxAge), 10),
 				Sources:     cli.EnvVars("CORS_MAX_AGE"),
+			},
+			//
+			// NATS section
+			//
+			&cli.StringFlag{
+				Name:        "nats-url",
+				Usage:       "NATS URL address",
+				Value:       defNatsURL,
+				DefaultText: defNatsURL,
+				Sources:     cli.EnvVars("NATS_URL"),
+			},
+			&cli.IntFlag{
+				Name:        "nats-max-reconnect",
+				Usage:       "NATS max reconnects",
+				Value:       int64(defNatsMaxReconnect),
+				DefaultText: strconv.Itoa(defNatsMaxReconnect),
+				Sources:     cli.EnvVars("NATS_MAX_RECONNECT"),
+			},
+			&cli.DurationFlag{
+				Name:        "nats-reconnect-wait",
+				Usage:       "NATS reconnect wait timeout",
+				Value:       defNatsReconnectWait,
+				DefaultText: defNatsReconnectWait.String(),
+				Sources:     cli.EnvVars("NATS_RECONNECT_WAIT"),
+			},
+			&cli.DurationFlag{
+				Name:        "nats-reconnect-jitter",
+				Usage:       "NATS reconnect jitter timeout",
+				Value:       defNatsReconnectJitter,
+				DefaultText: defNatsReconnectJitter.String(),
+				Sources:     cli.EnvVars("NATS_RECONNECT_JITTER"),
+			},
+			&cli.DurationFlag{
+				Name:        "nats-reconnect-jitter-tls",
+				Usage:       "NATS reconnect jitter tls timeout",
+				Value:       defNatsReconnectJitterTLS,
+				DefaultText: defNatsReconnectJitterTLS.String(),
+				Sources:     cli.EnvVars("NATS_RECONNECT_JITTER_TLS"),
+			},
+			&cli.DurationFlag{
+				Name:        "nats-timeout",
+				Usage:       "NATS timeout",
+				Value:       defNatsTimeout,
+				DefaultText: defNatsTimeout.String(),
+				Sources:     cli.EnvVars("NATS_TIMEOUT"),
+			},
+			&cli.DurationFlag{
+				Name:        "nats-ping-interval",
+				Usage:       "NATS ping interval",
+				Value:       defNatsPingInterval,
+				DefaultText: defNatsPingInterval.String(),
+				Sources:     cli.EnvVars("NATS_PING_INTERVAL"),
+			},
+			&cli.IntFlag{
+				Name:        "nats-max-ping-out",
+				Usage:       "NATS max ping out",
+				Value:       int64(defNatsMaxPingOut),
+				DefaultText: strconv.Itoa(defNatsMaxPingOut),
+				Sources:     cli.EnvVars("NATS_MAX_PING_OUT"),
+			},
+			&cli.IntFlag{
+				Name:        "nats-reconnect-buf-size",
+				Usage:       "NATS reconnect buffer size",
+				Value:       int64(defNatsReconnectBufSize),
+				DefaultText: strconv.Itoa(defNatsReconnectBufSize),
+				Sources:     cli.EnvVars("NATS_RECONNECT_BUF_SIZE"),
+			},
+			&cli.DurationFlag{
+				Name:        "nats-drain-timeout",
+				Usage:       "NATS drain-timeout",
+				Value:       defNatsDrainTimeout,
+				DefaultText: defNatsDrainTimeout.String(),
+				Sources:     cli.EnvVars("NATS_DRAIN_TIMEOUT"),
+			},
+			&cli.DurationFlag{
+				Name:        "nats-flusher-timeout",
+				Usage:       "NATS flusher-timeout",
+				Value:       defNatsFlusherTimeout,
+				DefaultText: defNatsFlusherTimeout.String(),
+				Sources:     cli.EnvVars("NATS_FLUSHER_TIMEOUT"),
 			},
 			//
 			// Server section
@@ -326,23 +419,32 @@ func bootstrap(ctx context.Context) error {
 		slog.New(slog.NewTextHandler(os.Stdout, nil)),
 	)
 	//
+	// NATS provider - no dependencies
+	//
+	natsProvider := provider.NewNatsProvider(ctx)
+	if _, err := natsProvider.Connect(); err != nil {
+		return err
+	}
+	ctx = context.WithValue(ctx, common.KeyNatsProvider, natsProvider)
+	defer natsProvider.Disconnect()
+	//
 	// Redis provider - no dependencies
 	//
 	redisProvider := provider.NewRedisProvider(ctx)
-	if _, err := redisProvider.Open(); err != nil {
+	if _, err := redisProvider.Connect(); err != nil {
 		return err
 	}
 	ctx = context.WithValue(ctx, common.KeyRedisProvider, redisProvider)
-	defer redisProvider.Close()
+	defer redisProvider.Disconnect()
 	//
 	// Pgx provider - no dependencies
 	//
 	pgxProvider := provider.NewPgxProvider(ctx)
-	if _, err := pgxProvider.Open(); err != nil {
+	if _, err := pgxProvider.Connect(); err != nil {
 		return err
 	}
 	ctx = context.WithValue(ctx, common.KeyPgxProvider, pgxProvider)
-	defer pgxProvider.Close()
+	defer pgxProvider.Disconnect()
 	//
 	// Jwt provider - depends on Redis
 	//
@@ -351,7 +453,7 @@ func bootstrap(ctx context.Context) error {
 	//
 	// twoFA provider - no dependencies
 	//
-	twoFAProvider := provider.New2FAProvider()
+	twoFAProvider := provider.New2FAProvider(ctx)
 	ctx = context.WithValue(ctx, common.Key2FAProvider, twoFAProvider)
 	//
 	// Router provider - no dependencies
