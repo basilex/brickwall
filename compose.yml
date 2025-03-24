@@ -1,41 +1,95 @@
 services:
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - bsp_net
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "system", "-d", "bspdb_dev"]
+      interval: 5s
+      retries: 5
+      timeout: 2s
+    volumes:
+      - ./volume/postgres:/var/lib/postgresql/data
+  nats:
+    image: nats:2.11
+    container_name: nats
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - bsp_net
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js"]
+    healthcheck:
+      test: ["CMD", "nats-server", "--signal", "healthz"]
+      interval: 5s
+      retries: 5
+      timeout: 2s
+    volumes:
+      - ./volume/nats:/nats
+  redis:
+    image: redis:7.4
+    container_name: redis
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - bsp_net
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+      timeout: 2s
+    volumes:
+      - ./volume/redis:/data
+  maildev:
+    image: maildev/maildev
+    container_name: maildev
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - bsp_net
+    ports:
+      - "1080:1080" # Web
+      - "1025:1025" # SMTP server
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://maildev:1080"]
+      interval: 5s
+      retries: 5
+      timeout: 3s
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: bsp-api
-    image: brickwall/bsp:0.1.0
-    command: "/app/bsp api"
+    build: .
+    container_name: api
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - bsp_net
     ports:
       - "8081:8081"
-    networks:
-      - bspnet
-    env_file:
-      - .env.pgsql
-      - .env.redis
-      - .env.smtp
-      - .env.nats
-      - .env.cors
-      - .env.jwt
-      - .env.ssl
-      - .env.api
-      - .env
-
-  # auth:
-  #   build:
-  #     context: ./auth
-  #     dockerfile: Dockerfile
-  #   container_name: bsp-auth
-  #   command: "/app/bsp auth"
-  #   ports:
-  #     - "8082:8082"
-  #   env_file:
-  #     - .env.auth
-  #     - .env.nats
-  #     - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # nats:
+      #   condition: service_healthy
+      redis:
+        condition: service_healthy
+      maildev:
+        condition: service_healthy
 
 networks:
-  bspnet:
+  bsp_net:
     driver: bridge
 #
 # eof

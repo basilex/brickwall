@@ -5,7 +5,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Return the platformm greetings
+      description: Return the platform greetings
       produces:
       - application/json
       responses:

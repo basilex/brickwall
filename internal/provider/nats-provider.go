@@ -75,6 +75,7 @@ func (rcv *NatsProvider) Connect() (*nats.Conn, error) {
 			},
 		),
 	}
+	slog.Debug(">>>>>>>>>>>>>>", "nats-url", cli.String("nats-url"))
 	if rcv.conn, err = nats.Connect(cli.String("nats-url"), options...); err != nil {
 		return nil, err
 	}

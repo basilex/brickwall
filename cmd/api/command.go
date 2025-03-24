@@ -21,7 +21,7 @@ var (
 	defTlsSslCert    string = "cert/server.crt"
 	defTlsSslKey     string = "cert/server.key"
 
-	defServerAddress         string        = "0.0.0.0:8081"
+	defServerAddress         string        = "api:8081"
 	defServerReadTimeout     time.Duration = time.Duration(3 * time.Second)
 	defServerWriteTimeout    time.Duration = time.Duration(3 * time.Second)
 	defServerGracefulTimeout time.Duration = time.Duration(5 * time.Second)
@@ -48,7 +48,7 @@ var (
 	defNatsFlusherTimeout     time.Duration = nats.DefaultFlusherTimeout
 
 	defPostgresDb                string        = "bsp_dev"
-	defPostgresHost              string        = "host.docker.internal"
+	defPostgresHost              string        = "postgres"
 	defPostgresPort              int           = 5432
 	defPostgresUser              string        = "system"
 	defPostgresPassword          string        = "passw0rd"
@@ -58,7 +58,7 @@ var (
 	defPostgresMaxConnIdleTime   time.Duration = time.Duration(3 * time.Minute)
 	defPostgresHealthCheckPeriod time.Duration = time.Duration(30 * time.Second)
 
-	defRedisAddr       string = "host.docker.internal:6379"
+	defRedisAddr       string = "redis:6379"
 	defRedisNetwork    string = "tcp"
 	defRedisClientName string = "bsp"
 	defRedisDb         int    = 0
@@ -67,9 +67,9 @@ var (
 	defJwtAccessExpiration  time.Duration = time.Duration(15 * time.Minute)
 	defJwtRefreshExpiration time.Duration = time.Duration(24 * time.Hour)
 
-	defSmtpServerHost     string = "host.docker.internal"
+	defSmtpServerHost     string = "maildev"
 	defSmtpServerPort     int    = 1025
-	defSmtpServerUser     string = "info"
+	defSmtpServerUser     string = "system"
 	defSmtpServerPassword string = "passw0rd"
 	defSmtpSenderFrom     string = "no-replay@brickwall.com"
 	defSmtpTemplates      string = "templates"
@@ -82,6 +82,7 @@ func Command(ctx context.Context) *cli.Command {
 		Category: "services",
 		Usage:    "Run the api service",
 		Action: func(ctx context.Context, cli *cli.Command) error {
+			slog.Info("bsp: starting service api...")
 			ctx = context.WithValue(ctx, common.KeyCommand, cli)
 			return bootstrap(ctx)
 		},

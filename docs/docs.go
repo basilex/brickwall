@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/aux": {
             "get": {
-                "description": "Return the platformm greetings",
+                "description": "Return the platform greetings",
                 "consumes": [
                     "application/json"
                 ],

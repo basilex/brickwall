@@ -43,7 +43,7 @@ api-docs:
 api-build:
 	@go build -a -ldflags="$(ldflags)" -o $(svc) main.go
 api-up:
-	@docker compose up --build --force-recreate
+	@docker compose up --build # --force-recreate
 api-down:
 	@docker compose down  --remove-orphans
 api-clean:
