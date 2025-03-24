@@ -8,6 +8,7 @@ import (
 
 type INatsAdapter interface {
 	Publish(string, []byte) error
+	Subscribe(string, func(*nats.Msg)) (*nats.Subscription, error)
 }
 
 type NatsAdapter struct {
@@ -21,4 +22,8 @@ func NewNATSAdapter(ctx context.Context, conn *nats.Conn) INatsAdapter {
 
 func (rcv *NatsAdapter) Publish(subject string, data []byte) error {
 	return rcv.conn.Publish(subject, data)
+}
+
+func (rcv *NatsAdapter) Subscribe(subject string, handler func(*nats.Msg)) (*nats.Subscription, error) {
+	return rcv.conn.Subscribe(subject, handler)
 }
