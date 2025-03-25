@@ -14,7 +14,7 @@ COPY . .
 COPY .git .git
 
 RUN go mod tidy
-RUN make api-build
+RUN make app-build
 RUN strip bsp
 
 FROM debian:bullseye

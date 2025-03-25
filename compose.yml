@@ -69,7 +69,10 @@ services:
       retries: 5
       timeout: 3s
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: brickwall:0.1.0
     container_name: api
     restart: always
     env_file:
