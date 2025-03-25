@@ -4,17 +4,22 @@
 @baseurl = {{proto}}://{{hostname}}{{basepath}}
 @contentType = application/json
 
-###
+### AuxIndex
 
 GET {{baseurl}} HTTP/1.1
 Content-Type: {{contentType}}
 
-###
+### AuxHealth
 
 GET {{baseurl}}/health HTTP/1.1
 Content-Type: {{contentType}}
 
-###
+### AuxMetadata
 
 GET {{baseurl}}/metadata HTTP/1.1
+Content-Type: {{contentType}}
+
+### AuxEnvironment
+
+GET {{baseurl}}/environment HTTP/1.1
 Content-Type: {{contentType}}
