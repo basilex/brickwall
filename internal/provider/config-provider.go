@@ -30,8 +30,8 @@ const (
 	DefCorsAllowHeaders     string = "Accept,Authorization,Content-Type,X-CSRF-Token"
 	DefCorsAllowMethods     string = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
 	DefCorsExposeHeaders    string = "*"
-	DefCorsAllowCredentials string = "false" // !no conv
-	DefCorsMaxAge           string = "300"   // !no conv
+	DefCorsAllowCredentials string = "false" // !no conv - cors related string
+	DefCorsMaxAge           string = "300"   // !no conv - cors related string
 
 	DefNatsURL                string        = nats.DefaultURL
 	DefNatsMaxReconnect       int           = nats.DefaultMaxReconnect

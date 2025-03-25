@@ -35,23 +35,23 @@ all:
 #
 # Swagger section
 #
-api-docs:
+app-docs:
 	swag init
 #
-# Service section
+# App section
 #
-api-build:
+app-build:
 	@go build -a -ldflags="$(ldflags)" -o $(svc) main.go
-api-up:
+app-up:
 	@docker compose up --build # --force-recreate
-api-down:
+app-down:
 	@docker compose down  --remove-orphans
-api-clean:
+app-clean:
 	@docker rm -v $(shell docker ps --filter status=exited -q)
 	@docker rmi $(img)
-api-prune:
+app-prune:
 	@docker system prune -f
-api-tidy:
+app-tidy:
 	@go mod tidy
 #
 # Dbs section
@@ -71,12 +71,34 @@ dbs-drop:
 dbs-version:
 	@make -C internal/storage version
 #
-# PHONY section
+# Swarm section
+#
+swarm-init:
+	@docker swarm init
+swarm-leave:
+	@docker swarm leave --force
+swarm-setup:
+	@chmod +x setenv.sh && ./setenv.sh
+swarm-cleanup:
+	@docker config ls --format '{{.ID}}' | xargs -r docker config rm
+	@docker secret ls --format '{{.ID}}' | xargs -r docker secret rm
+
+swarm-reset: swarm-cleanup swarm-setup
+
+swarm-config-ls:
+	@docker config ls
+swarm-secret-ls:
+	@docker secret ls
+swarm-node-ls:
+	@docker node ls
+#
+# .PHONY section
 #
 .PHONY: all \
 	api-docs
 	api-up api-down api-clean api-prune api-tidy \
-	dbs-gen dbs-up dbs-up1 dbs-down dbs-down1 dbs-drop dbs-version
+	dbs-gen dbs-up dbs-up1 dbs-down dbs-down1 dbs-drop dbs-version \
+	swarm-init swarm-leave swarm-setup swarm-cleanup swarm-reset swarm-config-ls swarm-secret-ls swarm-node-ls
 #
 # eof
 #

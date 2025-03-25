@@ -14,6 +14,7 @@ import (
 
 func Bootstrap(ctx context.Context) error {
 	md := ctx.Value(common.KeyMetadata).(*common.Metadata)
+
 	version := fmt.Sprintf("%s-%s-%s", md.Version, md.Staging, md.Githash)
 
 	command := &cli.Command{
