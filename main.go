@@ -4,7 +4,8 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"os"
 
 	"brickwall/cmd"
 	"brickwall/internal/common"
@@ -23,6 +24,7 @@ func main() {
 		},
 	)
 	if err := cmd.Bootstrap(ctx); err != nil {
-		log.Fatalf("error: %s", err)
+		slog.Error("bsp", "error", err)
+		os.Exit(1)
 	}
 }

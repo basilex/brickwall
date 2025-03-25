@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
-	"golang.org/x/exp/slog"
 )
 
 const (
@@ -139,7 +139,7 @@ func (rcv *EnvProvider) IsSwarm() bool {
 func (rcv *EnvProvider) GetString(key string, defValue string) string {
 	var ns EnvNS
 
-	if rcv.sensitiveData(key) {
+	if rcv.secretData(key) {
 		ns = SecretNS
 	} else {
 		ns = ConfigNS
@@ -199,7 +199,7 @@ func (rcv *EnvProvider) Environment() map[string]string {
 	newMap := make(map[string]string)
 
 	for key, value := range rcv.envMap {
-		if rcv.sensitiveData(key) {
+		if rcv.secretData(key) {
 			newMap[key] = "***** hidden value *****"
 			continue
 		}
@@ -227,11 +227,11 @@ func (rcv *EnvProvider) lookupNsKey(ns EnvNS, key string) string {
 		}
 	}
 	slog.Warn(
-		"bsp", ns, "ns", "key", key, "error", "unable to find candidate in ns/key",
+		"bsp", string(ns), "ns", "key", key, "error", "failed to find candidate in ns/key",
 	)
 	return ""
 }
 
-func (rcv *EnvProvider) sensitiveData(key string) bool {
+func (rcv *EnvProvider) secretData(key string) bool {
 	return strings.Contains(key, "SECRET") || strings.Contains(key, "PASSWORD")
 }
