@@ -92,13 +92,25 @@ swarm-secret-ls:
 swarm-node-ls:
 	@docker node ls
 #
+# Stack section
+#
+stack-deploy:
+	@docker stack deploy -c compose.yml $(sys)
+stack-remove:
+	@docker stack rm $(sys)
+stack-status:
+	@docker stack services $(sys)
+stack-logs:
+	@docker service logs $(sys)_api -f
+#
 # .PHONY section
 #
 .PHONY: all \
-	api-docs
-	api-up api-down api-clean api-prune api-tidy \
+	app-docs
+	app-up app-down app-clean app-prune app-tidy \
 	dbs-gen dbs-up dbs-up1 dbs-down dbs-down1 dbs-drop dbs-version \
-	swarm-init swarm-leave swarm-setup swarm-cleanup swarm-reset swarm-config-ls swarm-secret-ls swarm-node-ls
+	swarm-init swarm-leave swarm-setup swarm-cleanup swarm-reset swarm-config-ls swarm-secret-ls swarm-node-ls \
+	stack-deploy stack-remove stack-status stack-logs
 #
 # eof
 #

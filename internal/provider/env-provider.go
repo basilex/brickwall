@@ -77,8 +77,8 @@ const (
 type EnvNS string
 
 const (
-	ConfigNS EnvNS = "configs"
-	SecretNS EnvNS = "secrets"
+	ConfigNS EnvNS = "config"
+	SecretNS EnvNS = "secret"
 )
 
 type IEnvProvider interface {
