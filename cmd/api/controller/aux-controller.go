@@ -36,6 +36,7 @@ func (rcv *AuxController) Register() {
 	rcv.group.GET("/aux", rcv.Index)
 	rcv.group.GET("/aux/health", rcv.Health)
 	rcv.group.GET("/aux/metadata", rcv.Metadata)
+	rcv.group.GET("/aux/environment", rcv.Environment)
 }
 
 // @Summary     Greetings
@@ -69,4 +70,15 @@ func (rcv *AuxController) Health(c *gin.Context) {
 // @Router      /aux/metadata [get]
 func (rcv *AuxController) Metadata(c *gin.Context) {
 	c.JSON(http.StatusOK, common.NewResponse(rcv.auxService.Metadata()))
+}
+
+// @Summary     App Environment
+// @Description Obtain the app environment
+// @Tags        aux
+// @Accept      json
+// @Produce     json
+// @Success     200
+// @Router      /aux/environment [get]
+func (rcv *AuxController) Environment(c *gin.Context) {
+	c.JSON(http.StatusOK, common.NewResponse(rcv.auxService.Environment()))
 }

@@ -13,6 +13,8 @@ import (
 )
 
 const (
+	DefAppMode string = "debug"
+
 	DefTlsSslEnabled bool   = false
 	DefTlsSslCert    string = "cert/server.crt"
 	DefTlsSslKey     string = "cert/server.key"
@@ -86,6 +88,8 @@ type IEnvProvider interface {
 	GetInt(string, int) int
 	GetBool(string, bool) bool
 	GetDuration(string, time.Duration) time.Duration
+
+	Environment() map[string]string
 }
 
 type EnvProvider struct {
@@ -135,7 +139,7 @@ func (rcv *EnvProvider) IsSwarm() bool {
 func (rcv *EnvProvider) GetString(key string, defValue string) string {
 	var ns EnvNS
 
-	if strings.Contains(key, "SECRET") || strings.Contains(key, "PASSWORD") {
+	if rcv.sensitiveData(key) {
 		ns = SecretNS
 	} else {
 		ns = ConfigNS
@@ -191,6 +195,21 @@ func (rcv *EnvProvider) GetDuration(key string, defValue time.Duration) time.Dur
 	return defValue
 }
 
+func (rcv *EnvProvider) Environment() map[string]string {
+	newMap := make(map[string]string)
+
+	for key, value := range rcv.envMap {
+		if rcv.sensitiveData(key) {
+			newMap[key] = "***** hidden value *****"
+			continue
+		}
+		newMap[key] = value
+	}
+	newMap["APP_SWARM_MODE"] = strconv.FormatBool(rcv.swarm)
+	return newMap
+}
+
+// private functions
 func (rcv *EnvProvider) lookupNsKey(ns EnvNS, key string) string {
 	if rcv.swarm {
 		path := "/run/" + string(ns) + "/" + key
@@ -211,4 +230,8 @@ func (rcv *EnvProvider) lookupNsKey(ns EnvNS, key string) string {
 		"bsp", ns, "ns", "key", key, "error", "unable to find candidate in ns/key",
 	)
 	return ""
+}
+
+func (rcv *EnvProvider) sensitiveData(key string) bool {
+	return strings.Contains(key, "SECRET") || strings.Contains(key, "PASSWORD")
 }
