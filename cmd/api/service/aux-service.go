@@ -3,8 +3,6 @@ package service
 import (
 	"context"
 
-	"github.com/urfave/cli/v3"
-
 	"brickwall/internal/common"
 	"brickwall/internal/storage/dbs"
 )
@@ -37,10 +35,7 @@ func (rcv *AuxService) Health() *common.Message {
 }
 
 func (rcv *AuxService) Metadata() *common.Metadata {
-	cli := rcv.ctx.Value(common.KeyCommand).(*cli.Command)
 	metadata := rcv.ctx.Value(common.KeyMetadata).(*common.Metadata)
-
-	metadata.Service = "bsp-" + cli.Name
-
+	metadata.Service = "api"
 	return metadata
 }

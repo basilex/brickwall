@@ -10,7 +10,6 @@ import (
 	"text/template"
 
 	"github.com/jordan-wright/email"
-	"github.com/urfave/cli/v3"
 
 	"brickwall/internal/common"
 )
@@ -21,43 +20,51 @@ type ISmtpProvider interface {
 
 type SmtpProvider struct {
 	ctx context.Context
+
+	smtpServerHost     string
+	smtpServerPort     int
+	smtpServerUser     string
+	smtpServerPassword string
+	smtpSenderFrom     string
+	smtpTemplates      string
+	smtpUseTLS         bool
 }
 
 func NewSmtpProvider(ctx context.Context) ISmtpProvider {
-	return &SmtpProvider{ctx: ctx}
+	env := ctx.Value(common.KeyEnvProvider).(IEnvProvider)
+
+	return &SmtpProvider{
+		ctx: ctx,
+
+		smtpServerHost:     env.GetString("SMTP_SERVER_HOST", DefSmtpServerHost),
+		smtpServerPort:     env.GetInt("SMTP_SERVER_PORT", DefSmtpServerPort),
+		smtpServerUser:     env.GetString("SMTP_SERVER_USER", DefSmtpServerUser),
+		smtpServerPassword: env.GetString("SMTP_SERVER_PASSWORD", DefSmtpServerPassword),
+		smtpSenderFrom:     env.GetString("SMTP_SENDER_FROM", DefSmtpSenderFrom),
+		smtpTemplates:      env.GetString("SMTP_TEMPLATES", DefSmtpTemplates),
+		smtpUseTLS:         env.GetBool("SMTP_USE_TLS", DefSmtpUseTLS),
+	}
 }
 
 func (rcv *SmtpProvider) SendEmail(to, subject, template string, data map[string]string) error {
-	cli := rcv.ctx.Value(common.KeyCommand).(*cli.Command)
+	addr := fmt.Sprintf("%s:%d", rcv.smtpServerHost, rcv.smtpServerPort)
+	auth := smtp.PlainAuth("", rcv.smtpServerUser, rcv.smtpServerPassword, rcv.smtpServerHost)
+	file := fmt.Sprintf("%s/%s", rcv.smtpTemplates, template)
 
-	addr := fmt.Sprintf(
-		"%s:%d",
-		cli.String("smtp-server-host"),
-		cli.Int("smtp-server-port"),
-	)
-	auth := smtp.PlainAuth(
-		"",
-		cli.String("smtp-server-user"),
-		cli.String("smtp-server-password"),
-		cli.String("smtp-server-host"),
-	)
-	file := fmt.Sprintf("%s/%s",
-		cli.String("smtp-templates"), template,
-	)
 	body, err := loadTemplate(file, data)
 	if err != nil {
 		return err
 	}
 	email := &email.Email{
 		To:      []string{to},
-		From:    cli.String("smtp-sender-from"),
+		From:    rcv.smtpSenderFrom,
 		Subject: subject,
 		HTML:    []byte(body),
 		Headers: textproto.MIMEHeader{},
 	}
-	if cli.Bool("smtp-use-tls") {
+	if rcv.smtpUseTLS {
 		return email.SendWithTLS(addr, auth, &tls.Config{
-			ServerName: cli.String("smtp-server-host"),
+			ServerName: rcv.smtpServerHost,
 		})
 	}
 	return email.Send(addr, auth)

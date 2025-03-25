@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/nats-io/nats.go"
-	"github.com/urfave/cli/v3"
 
 	"brickwall/internal/common"
 )
@@ -28,26 +27,28 @@ func NewNatsProvider(ctx context.Context) INatsProvider {
 func (rcv *NatsProvider) Connect() (*nats.Conn, error) {
 	var err error
 
-	cli := rcv.ctx.Value(common.KeyCommand).(*cli.Command)
+	env := rcv.ctx.Value(common.KeyEnvProvider).(IEnvProvider)
 
 	options := []nats.Option{
-		nats.MaxReconnects(int(cli.Int("nats-max-reconnect"))),
-		nats.ReconnectWait(cli.Duration("nats-reconnect-wait")),
-		nats.ReconnectJitter(cli.Duration("nats-reconnect-jitter"), cli.Duration("nats-reconnect-jitter-tls")),
-		nats.Timeout(cli.Duration("nats-timeout")),
-		nats.PingInterval(cli.Duration("nats-ping-interval")),
-		nats.MaxPingsOutstanding(int(cli.Int("nats-max-ping-out"))),
-		nats.ReconnectBufSize(int(cli.Int("nats-reconnect-buf-size"))),
-		nats.DrainTimeout(cli.Duration("nats-drain-timeout")),
-		nats.FlusherTimeout(cli.Duration("nats-flusher-timeout")),
+		nats.MaxReconnects(env.GetInt("NATS_MAX_RECONNECT", DefNatsMaxReconnect)),
+		nats.ReconnectWait(env.GetDuration("NATS_RECONNECT_WAIT", DefNatsReconnectWait)),
+		nats.ReconnectJitter(
+			env.GetDuration("NATS_RECONNECT_JITTER", DefNatsReconnectJitter),
+			env.GetDuration("NATS_RECONNECT_JITTER_TLS", DefNatsReconnectJitterTLS),
+		),
+		nats.Timeout(env.GetDuration("NATS_TIMEOUT", DefNatsTimeout)),
+		nats.PingInterval(env.GetDuration("NATS_PING_INTERVAL", DefNatsPingInterval)),
+		nats.MaxPingsOutstanding(env.GetInt("NATS_MAX_PING_OUT", DefNatsMaxPingOut)),
+		nats.ReconnectBufSize(int(env.GetInt("NATS_RECONNECT_BUF_SIZE", DefNatsReconnectBufSize))),
+		nats.DrainTimeout(env.GetDuration("NATS_DRAIN_TIMEOUT", DefNatsDrainTimeout)),
+		nats.FlusherTimeout(env.GetDuration("NATS_FLUSHER_TIMEOUT", DefNatsFlusherTimeout)),
 
 		nats.DisconnectErrHandler(
 			func(nc *nats.Conn, err error) {
 				if !nc.IsClosed() {
 					slog.Error(
-						"nats",
-						"error", err,
-						"reconnects for", cli.Duration("nats-reconnect-wait"),
+						"nats", "error", err,
+						"reconnects for", env.GetDuration("NATS_RECONNECT_WAIT", DefNatsReconnectWait),
 					)
 				}
 			},
@@ -75,8 +76,8 @@ func (rcv *NatsProvider) Connect() (*nats.Conn, error) {
 			},
 		),
 	}
-	slog.Debug(">>>>>>>>>>>>>>", "nats-url", cli.String("nats-url"))
-	if rcv.conn, err = nats.Connect(cli.String("nats-url"), options...); err != nil {
+	natsURL := env.GetString("NATS_URL", DefNatsURL)
+	if rcv.conn, err = nats.Connect(natsURL, options...); err != nil {
 		return nil, err
 	}
 	return rcv.conn, nil

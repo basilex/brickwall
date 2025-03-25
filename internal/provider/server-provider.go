@@ -6,8 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/urfave/cli/v3"
-
 	"brickwall/internal/common"
 )
 
@@ -26,23 +24,23 @@ func NewServerProvider(ctx context.Context) IServerProvider {
 }
 
 func (rcv *ServerProvider) Startup(r IRouterProvider) IServerProvider {
-	cli := rcv.ctx.Value(common.KeyCommand).(*cli.Command)
+	env := rcv.ctx.Value(common.KeyEnvProvider).(IEnvProvider)
 
 	go func() {
 		slog.Info(
-			"http/s server started", "bind", cli.String("server-address"),
+			"http/s server started", "bind", env.GetString("SERVER_ADDRESS", DefServerAddress),
 		)
-		if cli.Bool("tls-ssl-enabled") {
+		if env.GetBool("TLS_SSL_ENABLED", DefTlsSslEnabled) {
 			//
 			// TODO: implement https server startup
 			//
 			log.Fatalf("https server not implemented yet, exiting...")
 		} else {
 			rcv.server = &http.Server{
-				Addr:           cli.String("server-address"),
-				ReadTimeout:    cli.Duration("server-read-timeout"),
-				WriteTimeout:   cli.Duration("server-write-timeout"),
-				MaxHeaderBytes: int(cli.Int("server-max-header-bytes")),
+				Addr:           env.GetString("SERVER_ADDRESS", DefServerAddress),
+				ReadTimeout:    env.GetDuration("SERVER_READ_TIMEOUT", DefServerReadTimeout),
+				WriteTimeout:   env.GetDuration("SERVER_WRITE_TIMEOUT", DefServerWriteTimeout),
+				MaxHeaderBytes: int(env.GetInt("SERVER_MAX_HEADER_BYTES", DefServerMaxHeaderBytes)),
 				Handler:        r.Engine(),
 			}
 
@@ -55,10 +53,10 @@ func (rcv *ServerProvider) Startup(r IRouterProvider) IServerProvider {
 }
 
 func (rcv *ServerProvider) Shutdown() error {
-	cli := rcv.ctx.Value(common.KeyCommand).(*cli.Command)
+	env := rcv.ctx.Value(common.KeyEnvProvider).(IEnvProvider)
 
 	ctx, cancel := context.WithTimeout(
-		context.Background(), cli.Duration("server-graceful-timeout"),
+		context.Background(), env.GetDuration("SERVER_GRACEFUL_TIMEOUT", DefServerGracefulTimeout),
 	)
 	defer cancel()
 

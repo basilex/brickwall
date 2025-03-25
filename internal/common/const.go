@@ -3,8 +3,7 @@ package common
 type KeyString string
 
 const (
-	// Common context keys
-	KeyCommand  KeyString = "key-command"
+	// Metadata context keys
 	KeyMetadata KeyString = "key-metadata"
 
 	// Service manage context key
@@ -19,12 +18,15 @@ const (
 	KeyJwtProvider       KeyString = "key-jwt-provider"
 	Key2FAProvider       KeyString = "key-2fa-provider"
 	KeyPgxProvider       KeyString = "key-pgx-provider"
+	KeyEnvProvider       KeyString = "key-env-provider"
 
 	// Auth context keys
 	KeyCtxUserID       KeyString = "key-ctx-user-id"
 	KeyCtxAccessToken  KeyString = "key-ctx-access-token"
 	KeyCtxRefreshToken KeyString = "key-ctx-refresh-token"
+)
 
+const (
 	// NATS subjects/topics
 	NatsSendRegistrationEmail KeyString = "send.registration.email"
 )

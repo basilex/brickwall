@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/urfave/cli/v3"
 
 	"brickwall/internal/common"
 )
@@ -33,22 +32,25 @@ func (rcv *PgxProvider) Connect() (*pgxpool.Pool, error) {
 	//
 	// TODO: implement SSL mode connection
 	//
-	cli := rcv.ctx.Value(common.KeyCommand).(*cli.Command)
+	env := rcv.ctx.Value(common.KeyEnvProvider).(IEnvProvider)
 
 	connUrl := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
-		cli.String("postgres-user"), cli.String("postgres-password"),
-		cli.String("postgres-host"), cli.Int("postgres-port"), cli.String("postgres-db"),
+		env.GetString("POSTGRES_USER", DefPostgresUser),
+		env.GetString("POSTGRES_PASSWORD", DefPostgresPassword),
+		env.GetString("POSTGRES_HOST", DefPostgresHost),
+		env.GetInt("POSTGRES_PORT", DefPostgresPort),
+		env.GetString("POSTGRES_DB", DefPostgresDb),
 	)
 	if conf, err = pgxpool.ParseConfig(connUrl); err != nil {
 		return nil, err
 	}
-	conf.MaxConns = int32(cli.Int("postgres-max-conns"))
-	conf.MinConns = int32(cli.Int("postgres-min-conns"))
-	conf.MaxConnLifetime = cli.Duration("postgres-max-conn-life-time")
-	conf.MaxConnIdleTime = cli.Duration("postgres-max-conn-idle-time")
-	conf.HealthCheckPeriod = cli.Duration("postgres-health-check-period")
+	conf.MaxConns = int32(env.GetInt("POSTGRES_MAX_CONNS", DefPostgresMaxConns))
+	conf.MinConns = int32(env.GetInt("POSTGRES_MIN_CONNS", DefPostgresMinConns))
+	conf.MaxConnLifetime = env.GetDuration("POSTGRES_MAX_CONN_LIFE_TIME", DefPostgresMaxConnLifeTime)
+	conf.MaxConnIdleTime = env.GetDuration("POSTGRES_MAX_CONN_IDLE_TIME", DefPostgresMaxConnIdleTime)
+	conf.HealthCheckPeriod = env.GetDuration("POSTGRES_HEALTH_CHECK_PERIOD", DefPostgresHealthCheckPeriod)
 
-	if rcv.pool, err = pgxpool.NewWithConfig(context.Background(), conf); err != nil {
+	if rcv.pool, err = pgxpool.NewWithConfig(rcv.ctx, conf); err != nil {
 		return nil, err
 	}
 	if err = rcv.pool.Ping(context.Background()); err != nil {

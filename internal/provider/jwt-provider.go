@@ -7,7 +7,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
-	"github.com/urfave/cli/v3"
 
 	"brickwall/internal/common"
 )
@@ -36,15 +35,15 @@ type JwtProvider struct {
 }
 
 func NewJwtProvider(ctx context.Context) IJwtProvider {
-	cli := ctx.Value(common.KeyCommand).(*cli.Command)
+	env := ctx.Value(common.KeyEnvProvider).(IEnvProvider)
 	redis := ctx.Value(common.KeyRedisProvider).(IRedisProvider)
 
 	return &JwtProvider{
 		ctx:               ctx,
 		redis:             redis.Client(),
-		secret:            cli.String("jwt-secret"),
-		accessExpiration:  cli.Duration("jwt-access-expiration"),
-		refreshExpiration: cli.Duration("jwt-refresh-expiration"),
+		secret:            env.GetString("JWT_SECRET", DefJwtSecret),
+		accessExpiration:  env.GetDuration("JWT_ACCESS_EXPIRATION", DefJwtAccessExpiration),
+		refreshExpiration: env.GetDuration("JWT_REFRESH_EXPIRATION", DefJwtRefreshExpiration),
 	}
 }
 

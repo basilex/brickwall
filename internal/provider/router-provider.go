@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"github.com/urfave/cli/v3"
 
 	"brickwall/internal/common"
 )
@@ -36,7 +35,7 @@ func (rcv *RouterProvider) Init() IRouterProvider {
 	gin.DefaultErrorWriter = &GinLoggerAdapter{}
 
 	rcv.engine = gin.Default()
-	rcv.engine.Use(cors(rcv.ctx))
+	rcv.engine.Use(rcv.cors(rcv.ctx))
 
 	return rcv
 }
@@ -45,16 +44,16 @@ func (rcv *RouterProvider) Engine() *gin.Engine {
 	return rcv.engine
 }
 
-func cors(ctx context.Context) gin.HandlerFunc {
-	cli := ctx.Value(common.KeyCommand).(*cli.Command)
+func (rcv *RouterProvider) cors(ctx context.Context) gin.HandlerFunc {
+	env := rcv.ctx.Value(common.KeyEnvProvider).(IEnvProvider)
 
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", cli.String("cors-allow-origin"))
-		c.Writer.Header().Set("Access-Control-Allow-Methods", cli.String("cors-allow-methods"))
-		c.Writer.Header().Set("Access-Control-Allow-Headers", cli.String("cors-allow-headers"))
-		c.Writer.Header().Set("Access-Control-Expose-Headers", cli.String("cors-expose-headers"))
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", cli.String("cors-allow-credentials"))
-		c.Writer.Header().Set("Access-Control-Max-Age", cli.String("cors-max-age"))
+		c.Writer.Header().Set("Access-Control-Allow-Origin", env.GetString("CORS_ALLOW_ORIGIN", DefCorsAllowOrigin))
+		c.Writer.Header().Set("Access-Control-Allow-Methods", env.GetString("CORS_ALLOW_METHODS", DefCorsAllowMethods))
+		c.Writer.Header().Set("Access-Control-Allow-Headers", env.GetString("CORS_ALLOW_HEADERS", DefCorsAllowHeaders))
+		c.Writer.Header().Set("Access-Control-Expose-Headers", env.GetString("CORS_EXPOSE_HEADERS", DefCorsExposeHeaders))
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", env.GetString("CORS_ALLOW_CREDENTIALS", DefCorsAllowCredentials))
+		c.Writer.Header().Set("Access-Control-Max-Age", env.GetString("CORS_MAX_AGE", DefCorsMaxAge))
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
