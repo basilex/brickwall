@@ -43,9 +43,9 @@ app-docs:
 app-build:
 	@go build -a -ldflags="$(ldflags)" -o $(svc) main.go
 app-up:
-	@docker compose up --build # --force-recreate
+	@docker compose -f compose.yml up --build
 app-down:
-	@docker compose down  --remove-orphans
+	@docker compose -f compose.yml down  --remove-orphans
 app-clean:
 	@docker rm -v $(shell docker ps --filter status=exited -q)
 	@docker rmi $(img)
@@ -71,46 +71,47 @@ dbs-drop:
 dbs-version:
 	@make -C internal/storage version
 #
-# Swarm section
+# K8s all sections
 #
-swarm-init:
-	@docker swarm init
-swarm-leave:
-	@docker swarm leave --force
-swarm-setup:
-	@chmod +x setenv.sh && ./setenv.sh
-swarm-cleanup:
-	@docker config ls --format '{{.ID}}' | xargs -r docker config rm
-	@docker secret ls --format '{{.ID}}' | xargs -r docker secret rm
-
-swarm-reset: swarm-cleanup swarm-setup
-
-swarm-config-ls:
-	@docker config ls
-swarm-secret-ls:
-	@docker secret ls
-swarm-node-ls:
-	@docker node ls
+apply-all:
+	kubectl apply -f ./kubernetes/postgres-pvc.yml
+	kubectl apply -f ./kubernetes/postgres-config.yml
+	kubectl apply -f ./kubernetes/postgres-secrets.yml
+	kubectl apply -f ./kubernetes/deployment-postgres.yml
+	kubectl apply -f ./kubernetes/deployment-nats.yml
+	kubectl apply -f ./kubernetes/deployment-redis.yml
+	kubectl apply -f ./kubernetes/deployment-maildev.yml
+	kubectl apply -f ./kubernetes/deployment-api.yml
 #
-# Stack section
+# K8s postgres section
 #
-stack-deploy:
-	@docker stack deploy -c compose.yml $(sys)
-stack-remove:
-	@docker stack rm $(sys)
-stack-status:
-	@docker stack services $(sys)
-stack-logs:
-	@docker service logs $(sys)_api -f
+apply-postgres:
+	kubectl apply -f ./kubernetes/postgres-pvc.yml
+	kubectl apply -f ./kubernetes/postgres-config.yml
+	kubectl apply -f ./kubernetes/postgres-secrets.yml
+	kubectl apply -f ./kubernetes/deployment-postgres.yml
+redeploy-postgres:
+	kubectl rollout restart deployment postgres
+delete-postgres:
+	kubectl delete deployment postgres
+#
+# K8s redis section
+#
+apply-redis:
+	kubectl apply -f ./kubernetes/redis-pvc.yml
+	kubectl apply -f ./kubernetes/redis-config.yml
+	kubectl apply -f ./kubernetes/deployment-redis.yml
+redeploy-redis:
+	kubectl rollout restart deployment redis
+delete-redis:
+	kubectl delete deployment redis
 #
 # .PHONY section
 #
 .PHONY: all \
 	app-docs
 	app-up app-down app-clean app-prune app-tidy \
-	dbs-gen dbs-up dbs-up1 dbs-down dbs-down1 dbs-drop dbs-version \
-	swarm-init swarm-leave swarm-setup swarm-cleanup swarm-reset swarm-config-ls swarm-secret-ls swarm-node-ls \
-	stack-deploy stack-remove stack-status stack-logs
+	dbs-gen dbs-up dbs-up1 dbs-down dbs-down1 dbs-drop dbs-version
 #
 # eof
 #

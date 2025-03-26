@@ -93,6 +93,7 @@ services:
 
 networks:
   bsp_net:
+    name: bsp_net
     driver: bridge
 #
 # eof
