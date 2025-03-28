@@ -126,6 +126,21 @@ services:
     volumes:
       - ./volume/redis:/data
   #
+  # Smtp section
+  #
+  smtp:
+    image: brickwall:0.1.0
+    container_name: smtp
+    restart: on-failure
+    command: "/app/bsp smtp"
+    networks:
+      - bsp_net
+    ports:
+      - "8082:8081"
+    # depends_on:
+      # nats_n1:
+      #   condition: service_healthy
+  #
   # Api section
   #
   api:
@@ -143,22 +158,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      # nats:
+      # nats_n1:
       #   condition: service_healthy
       redis:
         condition: service_healthy
-  #
-  # Smtp section
-  #
-  smtp:
-    image: brickwall:0.1.0
-    container_name: smtp
-    restart: on-failure
-    command: "/app/bsp smtp"
-    networks:
-      - bsp_net
-    ports:
-      - "8082:8081"
   #
   # Auth section
   #
@@ -171,13 +174,13 @@ services:
       - bsp_net
     ports:
       - "8083:8081"
-    # depends_on:
-    #   postgres:
-    #     condition: service_healthy
-    #   # nats:
-    #   #   condition: service_healthy
-    #   redis:
-    #     condition: service_healthy
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # nats_n1:
+      #   condition: service_healthy
+      redis:
+        condition: service_healthy
 #
 # Networks section
 #

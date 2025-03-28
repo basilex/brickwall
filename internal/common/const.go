@@ -6,7 +6,7 @@ const (
 	// Metadata context keys
 	KeyMetadata KeyString = "key-metadata"
 
-	// Service manage context key
+	// Service manager context key
 	KeyServiceManager KeyString = "key-service-manager"
 
 	// Provider context keys
@@ -28,7 +28,7 @@ const (
 
 const (
 	// NATS subjects/topics
-	NatsSendRegistrationEmail KeyString = "send.registration.email"
+	TopicUserRegistrationEmail KeyString = "topic.user.registration.email"
 )
 
 const (

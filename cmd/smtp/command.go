@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/urfave/cli/v3"
 
+	"brickwall/cmd/smtp/handler"
 	"brickwall/cmd/smtp/service"
 	"brickwall/internal/common"
 	"brickwall/internal/provider"
@@ -73,7 +74,14 @@ func bootstrap(ctx context.Context) error {
 	RegisterRoutes(ctx, routerProvider)
 	srv := provider.NewServerProvider(ctx).Startup(routerProvider)
 	defer srv.Shutdown()
-
+	//
+	// Subscriber for the incoming messages
+	//
+	natsSubscriber := provider.NewNatsSubscriber(ctx)
+	if err := natsSubscriber.Register(handler.HandlerMapper); err != nil {
+		return err
+	}
+	defer natsSubscriber.Shutdown()
 	//
 	// Watcher provider - no dependencies
 	// Here the app is waiting for the signals to interruption

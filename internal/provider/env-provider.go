@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	DefAppMode string = "debug"
+	DefAppMode         string = "debug"
+	DefEncoderStrategy string = "msgpack"
 
 	DefTlsSslEnabled bool   = false
 	DefTlsSslCert    string = "cert/server.crt"
