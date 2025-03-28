@@ -12,6 +12,7 @@ import (
 type INatsProvider interface {
 	Connect() (*nats.Conn, error)
 	Connection() *nats.Conn
+	JetStream() (nats.JetStreamContext, error)
 	Disconnect()
 }
 
@@ -30,6 +31,7 @@ func (rcv *NatsProvider) Connect() (*nats.Conn, error) {
 	env := rcv.ctx.Value(common.KeyEnvProvider).(IEnvProvider)
 
 	options := []nats.Option{
+		nats.Name("BSP"),
 		nats.MaxReconnects(env.GetInt("NATS_MAX_RECONNECT", DefNatsMaxReconnect)),
 		nats.ReconnectWait(env.GetDuration("NATS_RECONNECT_WAIT", DefNatsReconnectWait)),
 		nats.ReconnectJitter(
@@ -55,19 +57,12 @@ func (rcv *NatsProvider) Connect() (*nats.Conn, error) {
 		),
 		nats.ReconnectHandler(
 			func(nc *nats.Conn) {
-				slog.Warn(
-					"nats",
-					"reconnected", nc.ConnectedUrl(),
-				)
+				slog.Warn("nats", "reconnected", nc.ConnectedUrl())
 			},
 		),
 		nats.ErrorHandler(
 			func(c *nats.Conn, s *nats.Subscription, err error) {
-				slog.Error(
-					"nats",
-					"error", err,
-					"subscription", s.Subject,
-				)
+				slog.Error("nats", "error", err, "subscription", s.Subject)
 			},
 		),
 		nats.ClosedHandler(
@@ -76,8 +71,9 @@ func (rcv *NatsProvider) Connect() (*nats.Conn, error) {
 			},
 		),
 	}
-	natsURL := env.GetString("NATS_URL", DefNatsURL)
-	if rcv.conn, err = nats.Connect(natsURL, options...); err != nil {
+	natsURLs := env.GetString("NATS_URL", DefNatsURL)
+
+	if rcv.conn, err = nats.Connect(natsURLs, options...); err != nil {
 		return nil, err
 	}
 	return rcv.conn, nil
@@ -85,6 +81,10 @@ func (rcv *NatsProvider) Connect() (*nats.Conn, error) {
 
 func (rcv *NatsProvider) Connection() *nats.Conn {
 	return rcv.conn
+}
+
+func (rcv *NatsProvider) JetStream() (nats.JetStreamContext, error) {
+	return rcv.conn.JetStream()
 }
 
 func (rcv *NatsProvider) Disconnect() {

@@ -1,4 +1,88 @@
 services:
+  #
+  # NATS section
+  #
+  nats_n1:
+    image: nats:latest
+    container_name: nats_n1
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - ./volume/nats/nats_n1:/data
+    networks:
+      - bsp_net
+    environment:
+      - NATS_CLUSTER_ADVERTISE=nats_n1:6222
+      - NATS_SERVER_NAME=nats_n1
+      - NATS_LISTEN_CLIENTS=0.0.0.0
+      - NATS_LISTEN_CLUSTER=0.0.0.0
+      - NATS_ROUTE_PORT=6222
+      - NATS_JETSTREAM=true
+      - NATS_JETSTREAM_DIR=./volume/nats/jetstream
+    command: ["-js"]
+    healthcheck:
+      test: ["CMD", "nats_server", "--signal", "healthz"]
+      interval: 5s
+      retries: 5
+      timeout: 2s
+
+  nats_n2:
+    image: nats:latest
+    container_name: nats_n2
+    ports:
+      - "4223:4222"
+      - "8223:8222"
+    volumes:
+      - ./volume/nats/nats_n2:/data
+    networks:
+      - bsp_net
+    environment:
+      - NATS_CLUSTER_ADVERTISE=nats_n2:6222
+      - NATS_SERVER_NAME=nats_n2
+      - NATS_LISTEN_CLIENTS=0.0.0.0
+      - NATS_LISTEN_CLUSTER=0.0.0.0
+      - NATS_ROUTE_PORT=6222
+      - NATS_JETSTREAM=true
+      - NATS_JETSTREAM_DIR=./volume/nats/jetstream
+    command: ["-js"]
+    healthcheck:
+      test: ["CMD", "nats_server", "--signal", "healthz"]
+      interval: 5s
+      retries: 5
+      timeout: 2s
+    depends_on:
+      - nats_n1
+
+  nats_n3:
+    image: nats:latest
+    container_name: nats_n3
+    ports:
+      - "4224:4222"
+      - "8224:8222"
+    volumes:
+      - ./volume/nats/nats_n3:/data
+    networks:
+      - bsp_net
+    environment:
+      - NATS_CLUSTER_ADVERTISE=nats_n3:6222
+      - NATS_SERVER_NAME=nats_n3
+      - NATS_LISTEN_CLIENTS=0.0.0.0
+      - NATS_LISTEN_CLUSTER=0.0.0.0
+      - NATS_ROUTE_PORT=6222
+      - NATS_JETSTREAM=true
+      - NATS_JETSTREAM_DIR=./volume/nats/jetstream
+    command: ["-js"]
+    healthcheck:
+      test: ["CMD", "nats_server", "--signal", "healthz"]
+      interval: 5s
+      retries: 5
+      timeout: 2s
+    depends_on:
+      - nats_n1
+  #
+  # Postgres section
+  #
   postgres:
     image: postgres:17
     container_name: postgres
@@ -16,25 +100,9 @@ services:
       timeout: 2s
     volumes:
       - ./volume/postgres:/var/lib/postgresql/data
-  nats:
-    image: nats:2.11
-    container_name: nats
-    restart: always
-    env_file:
-      - .env
-    networks:
-      - bsp_net
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-    command: ["-js"]
-    healthcheck:
-      test: ["CMD", "nats-server", "--signal", "healthz"]
-      interval: 5s
-      retries: 5
-      timeout: 2s
-    volumes:
-      - ./volume/nats:/nats
+  #
+  # Redis section
+  #
   redis:
     image: redis:7.4
     container_name: redis
@@ -52,22 +120,9 @@ services:
       timeout: 2s
     volumes:
       - ./volume/redis:/data
-  maildev:
-    image: maildev/maildev
-    container_name: maildev
-    restart: always
-    env_file:
-      - .env
-    networks:
-      - bsp_net
-    ports:
-      - "1080:1080" # Web
-      - "1025:1025" # SMTP server
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://maildev:1080"]
-      interval: 5s
-      retries: 5
-      timeout: 3s
+  #
+  # Api section
+  #
   api:
     build:
       context: .
@@ -87,8 +142,6 @@ services:
       # nats:
       #   condition: service_healthy
       redis:
-        condition: service_healthy
-      maildev:
         condition: service_healthy
 
 networks:

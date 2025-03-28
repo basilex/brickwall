@@ -15,7 +15,7 @@ import (
 )
 
 type ISmtpProvider interface {
-	SendEmail(string, string, string, map[string]string) error
+	Send(string, string, string, map[string]string) error
 }
 
 type SmtpProvider struct {
@@ -46,7 +46,7 @@ func NewSmtpProvider(ctx context.Context) ISmtpProvider {
 	}
 }
 
-func (rcv *SmtpProvider) SendEmail(to, subject, template string, data map[string]string) error {
+func (rcv *SmtpProvider) Send(to, subject, template string, data map[string]string) error {
 	addr := fmt.Sprintf("%s:%d", rcv.smtpServerHost, rcv.smtpServerPort)
 	auth := smtp.PlainAuth("", rcv.smtpServerUser, rcv.smtpServerPassword, rcv.smtpServerHost)
 	file := fmt.Sprintf("%s/%s", rcv.smtpTemplates, template)
