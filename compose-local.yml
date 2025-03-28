@@ -1,10 +1,11 @@
 services:
   #
-  # NATS section
+  # NATS cluster node1 section
   #
   nats_n1:
     image: nats:latest
     container_name: nats_n1
+    restart: on-failure
     ports:
       - "4222:4222"
       - "8222:8222"
@@ -26,10 +27,13 @@ services:
       interval: 5s
       retries: 5
       timeout: 2s
-
+  #
+  # NATS cluster node2 section
+  #
   nats_n2:
     image: nats:latest
     container_name: nats_n2
+    restart: on-failure
     ports:
       - "4223:4222"
       - "8223:8222"
@@ -53,10 +57,13 @@ services:
       timeout: 2s
     depends_on:
       - nats_n1
-
+  #
+  # NATS cluster node3 section
+  #
   nats_n3:
     image: nats:latest
     container_name: nats_n3
+    restart: on-failure
     ports:
       - "4224:4222"
       - "8224:8222"
@@ -86,9 +93,9 @@ services:
   postgres:
     image: postgres:17
     container_name: postgres
-    restart: always
-    env_file:
-      - .env
+    restart: on-failure
+    # env_file:
+    #   - .env
     networks:
       - bsp_net
     ports:
@@ -106,9 +113,7 @@ services:
   redis:
     image: redis:7.4
     container_name: redis
-    restart: always
-    env_file:
-      - .env
+    restart: on-failure
     networks:
       - bsp_net
     ports:
@@ -129,9 +134,8 @@ services:
       dockerfile: Dockerfile
     image: brickwall:0.1.0
     container_name: api
-    restart: always
-    env_file:
-      - .env
+    restart: on-failure
+    command: "/app/bsp api"
     networks:
       - bsp_net
     ports:
@@ -143,7 +147,40 @@ services:
       #   condition: service_healthy
       redis:
         condition: service_healthy
-
+  #
+  # Smtp section
+  #
+  smtp:
+    image: brickwall:0.1.0
+    container_name: smtp
+    restart: on-failure
+    command: "/app/bsp smtp"
+    networks:
+      - bsp_net
+    ports:
+      - "8082:8081"
+  #
+  # Auth section
+  #
+  auth:
+    image: brickwall:0.1.0
+    container_name: auth
+    restart: on-failure
+    command: "/app/bsp auth"
+    networks:
+      - bsp_net
+    ports:
+      - "8083:8081"
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
+    #   # nats:
+    #   #   condition: service_healthy
+    #   redis:
+    #     condition: service_healthy
+#
+# Networks section
+#
 networks:
   bsp_net:
     name: bsp_net

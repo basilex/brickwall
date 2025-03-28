@@ -5,7 +5,6 @@ import (
 
 	"brickwall/internal/common"
 	"brickwall/internal/provider"
-	"brickwall/internal/storage/dbs"
 )
 
 type IAuxService interface {
@@ -15,17 +14,16 @@ type IAuxService interface {
 	Environment() map[string]string
 }
 type AuxService struct {
-	ctx     context.Context
-	queries *dbs.Queries
+	ctx context.Context
 }
 
-func NewAuxService(ctx context.Context, queries *dbs.Queries) IAuxService {
-	return &AuxService{ctx: ctx, queries: queries}
+func NewAuxService(ctx context.Context) IAuxService {
+	return &AuxService{ctx: ctx}
 }
 
 func (rcv *AuxService) Index() *common.Message {
 	return &common.Message{
-		Message: "Brickwall platform api service",
+		Message: "Brickwall platform auth service",
 	}
 }
 
@@ -37,7 +35,7 @@ func (rcv *AuxService) Health() *common.Message {
 
 func (rcv *AuxService) Metadata() *common.Metadata {
 	metadata := rcv.ctx.Value(common.KeyMetadata).(*common.Metadata)
-	metadata.Service = "api"
+	metadata.Service = "auth"
 	return metadata
 }
 

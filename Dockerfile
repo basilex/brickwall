@@ -22,6 +22,7 @@ FROM debian:bullseye
 RUN apt-get update
 RUN apt-get install -y bash
 RUN apt-get install -y curl
+RUN apt-get install -y wget
 
 WORKDIR /app
 
@@ -30,7 +31,5 @@ COPY --from=builder /build/resource .
 COPY --from=builder /build/.env .
 
 ENV PATH="/app:$PATH"
-
-CMD ["/app/bsp", "api"]
 
 EXPOSE 8081

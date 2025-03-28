@@ -53,17 +53,17 @@ app-tidy:
 #
 # Compose section
 #
-all-up:
+app-up:
 	@docker compose -f compose-local.yml up --build
-all-down:
+app-down:
 	@docker compose -f compose-local.yml down  --remove-orphans
-all-clean:
+app-clean:
 	@docker rm -v $(shell docker ps --filter status=exited -q)
 	@docker rmi $(img)
-all-prune:
+app-prune:
 	@docker system prune -af
 
-.PHONY: all-up all-down all-clean all-prune
+.PHONY: app-up app-down app-clean app-prune
 #
 # Dbs section
 #
