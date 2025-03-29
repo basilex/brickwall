@@ -40,8 +40,9 @@ func NewAuthController(ctx context.Context, grp *gin.RouterGroup) IAuthControlle
 	serviceManager := ctx.Value(common.KeyServiceManager).(service.IServiceManager)
 
 	return &AuthController{
-		ctx:         ctx,
-		group:       grp,
+		ctx:   ctx,
+		group: grp,
+
 		authService: serviceManager.AuthService(),
 		userService: serviceManager.UserService(),
 	}
