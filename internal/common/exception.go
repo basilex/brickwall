@@ -47,6 +47,9 @@ var (
 	ErrEmailTemplateNotFound  = errors.New("missing template")
 	ErrEmailTemplateRendering = errors.New("failed to render template")
 
+	// Nats layer errors
+	ErrNatsPublishTopic = errors.New("failed to public message")
+
 	// Business layer errors
 
 	// Network layer errors

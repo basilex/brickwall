@@ -23,18 +23,23 @@ type AuthService struct {
 	ctx     context.Context
 	queries *dbs.Queries
 
+	envProvider   provider.IEnvProvider
 	pgxProvider   provider.IPgxProvider
 	jwtProvider   provider.IJwtProvider
 	twoFAProvider provider.I2FAProvider
+	natsProvider  provider.INatsProvider
 }
 
 func NewAuthService(ctx context.Context, queries *dbs.Queries) IAuthService {
 	return &AuthService{
-		ctx:           ctx,
-		queries:       queries,
+		ctx:     ctx,
+		queries: queries,
+
+		envProvider:   ctx.Value(common.KeyEnvProvider).(provider.IEnvProvider),
 		pgxProvider:   ctx.Value(common.KeyPgxProvider).(provider.IPgxProvider),
 		jwtProvider:   ctx.Value(common.KeyJwtProvider).(provider.IJwtProvider),
 		twoFAProvider: ctx.Value(common.Key2FAProvider).(provider.I2FAProvider),
+		natsProvider:  ctx.Value(common.KeyNatsProvider).(provider.INatsProvider),
 	}
 }
 
@@ -54,8 +59,9 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 	qtx := rcv.queries.WithTx(trx)
 
 	// create user
-	passwordCrypted, _ := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
-
+	passwordCrypted, _ := bcrypt.GenerateFromPassword(
+		[]byte(req.Password), bcrypt.DefaultCost,
+	)
 	user, err := qtx.UserNew(context.Background(), &dbs.UserNewParams{
 		Username: req.Email,
 		Password: string(passwordCrypted),
@@ -71,6 +77,7 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrDBRecordInsert, err)
 	}
+
 	// create default profile
 	_, err = qtx.ProfileNew(ctx, &dbs.ProfileNewParams{
 		UserID:    user.ID,
@@ -81,8 +88,15 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 		return nil, fmt.Errorf("%w: %v", common.ErrDBRecordInsert, err)
 	}
 
-	// send an verification email
-	// TODO: should be implemented
+	// encode user data and publish the event to the nats topic
+	encoder, _ := provider.EncoderFactory(
+		rcv.envProvider.GetString("ENCODER_STRATEGY", provider.DefEncoderStrategy),
+	)
+	data, _ := encoder.Encode(user)
+	nats := rcv.natsProvider.Connection()
+	if err := nats.Publish(string(common.TopicUserRegistrationEmail), data); err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrNatsPublishTopic, err)
+	}
 
 	// commit transaction
 	if err := trx.Commit(ctx); err != nil {

@@ -10,7 +10,6 @@ import (
 	"brickwall/cmd/api/exchange"
 	"brickwall/cmd/api/service"
 	"brickwall/internal/common"
-	"brickwall/internal/provider"
 )
 
 type IAuthController interface {
@@ -30,26 +29,21 @@ type IAuthController interface {
 }
 
 type AuthController struct {
-	ctx          context.Context
-	group        *gin.RouterGroup
-	envProvider  provider.IEnvProvider
-	natsProvider provider.INatsProvider
-	authService  service.IAuthService
-	userService  service.IUserService
+	ctx   context.Context
+	group *gin.RouterGroup
+
+	authService service.IAuthService
+	userService service.IUserService
 }
 
 func NewAuthController(ctx context.Context, grp *gin.RouterGroup) IAuthController {
-	envProvider := ctx.Value(common.KeyEnvProvider).(provider.IEnvProvider)
-	natsProvider := ctx.Value(common.KeyNatsProvider).(provider.INatsProvider)
 	serviceManager := ctx.Value(common.KeyServiceManager).(service.IServiceManager)
 
 	return &AuthController{
-		ctx:          ctx,
-		group:        grp,
-		envProvider:  envProvider,
-		natsProvider: natsProvider,
-		authService:  serviceManager.AuthService(),
-		userService:  serviceManager.UserService(),
+		ctx:         ctx,
+		group:       grp,
+		authService: serviceManager.AuthService(),
+		userService: serviceManager.UserService(),
 	}
 }
 
@@ -71,12 +65,6 @@ func (rcv *AuthController) AuthSignup(c *gin.Context) {
 		c.JSON(common.ErrMapper(err))
 		return
 	}
-	encoder, _ := provider.EncoderFactory(
-		rcv.envProvider.GetString("ENCODER_STRATEGY", provider.DefEncoderStrategy),
-	)
-	data, _ := encoder.Encode(res)
-	rcv.natsProvider.Connection().Publish(string(common.TopicUserRegistrationEmail), data)
-
 	c.JSON(http.StatusOK, common.NewResponse(res))
 }
 
