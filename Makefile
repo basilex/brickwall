@@ -42,7 +42,26 @@ checkfor := $(foreach exec,$(bins), \
 # Main entry point
 #
 all:
-	@echo '*** Help will be implemented later'
+	@echo '*** Brickwall Makefile sections'
+	@echo '    ---------------------------'
+	@echo '>>> dbs management section'
+	@echo '  - dbs-gen     : Generate sqlc db layer'
+	@echo '  - dbs-up      : Install db schema and default data'
+	@echo '  - dbs-up1     : Migrate one level of the db schema'
+	@echo '  - dbs-down    : Uninstall db schema (all the data purged)'
+	@echo '  - dbs-down1   : Migrate down one level of the db schema'
+	@echo '  - dbs-drop    : Drop entire db schema (all the data purged)'
+	@echo '  - dbs-version : Show the db migration version'
+	@echo
+	@echo '>>> app management section'
+	@echo '  - app-tidy    : Ensure that all imports are satisfied'
+	@echo '  - app-build   : Build the application inside the linux container'
+	@echo '  - app-up      : Run all the containers from the docker composer yml'
+	@echo '  - app-down    : Shut down all the docker compose containers'
+	@echo '  - app-clean   : Remove all the docker exited containers'
+	@echo '  - app-cert    : Generate app TLS/SSL certificates'
+	@echo '  - app-prune   : Prune all in the local docker env'
+
 	@exit 0
 
 .PHONY: all
@@ -56,14 +75,14 @@ docs:
 #
 # App section
 #
-app-build:
-	@go build -a -ldflags="$(ldflags)" -o $(svc) main.go
 app-tidy:
 	@go mod tidy
+app-build:
+	@go build -a -ldflags="$(ldflags)" -o $(svc) main.go
 
-.PHONY: app-build app-tidy
+.PHONY: app-tidy app-build
 #
-# Compose section
+# Composer section
 #
 app-up:
 	@docker compose -f compose-local.yml up --build

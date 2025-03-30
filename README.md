@@ -61,7 +61,35 @@ $ make app-up
 $ make app-down
 ```
 
-### 3. Playing with an API
+### 3. Review Makefile commands
+
+You make cal _make_ without flags to obtain extended help for all the commands available for project managing.
+
+```
+$ make
+
+*** Brickwall Makefile sections
+    ---------------------------
+>>> dbs management section
+  - dbs-gen     : Generate sqlc db layer
+  - dbs-up      : Install db schema and default data
+  - dbs-up1     : Migrate one level of the db schema
+  - dbs-down    : Uninstall db schema (all the data purged)
+  - dbs-down1   : Migrate down one level of the db schema
+  - dbs-drop    : Drop entire db schema (all the data purged)
+  - dbs-version : Show the db migration version
+
+>>> app management section
+  - app-tidy    : Ensure that all imports are satisfied
+  - app-build   : Build the application inside the linux container
+  - app-up      : Run all the containers from the docker composer yml
+  - app-down    : Shut down all the docker compose containers
+  - app-clean   : Remove all the docker exited containers
+  - app-cert    : Generate app TLS/SSL certificates
+  - app-prune   : Prune all in the local docker env
+```
+
+### 4. Playing with an API
 
 The API server opens and maps the port 8081 by default to the localhost
 
@@ -74,14 +102,16 @@ Check the API from the browser and make the requests to:
 
 The rest of endpoints you may check int the source code microservice controllers.
 
-### 4. API Docs
+### 5. API Docs
 
 Swagger API docs will be implemented in the nearest future
 
-### 5. NB
+### 6. NB
 
 _PS:_ Project is in the active development so no concrete instructions or stable structure.
 
-_PS2:_ This readme will be extended, depending of the stage of the development process.
+_PS2:_ This readme will be extended, depending on the stage of the development process.
+
+_PS3:_ All questions you may send to _alexander.vasilenko@gmail.com_ email.
 
 Happy hacking!
