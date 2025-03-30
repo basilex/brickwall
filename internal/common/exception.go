@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	// common
+	// Common layer errors
 	ErrNotImplemented = errors.New("not implemented")
 
 	// Request layer errors
@@ -31,7 +31,7 @@ var (
 	ErrAuthUserBlocked     = errors.New("user blocked")
 	ErrAuthUserNotChecked  = errors.New("user not checked")
 
-	// Auth JWT layer errors
+	// JWT layer errors
 	ErrJwtTokenInvalid     = errors.New("invalid token")
 	ErrJwtTokenSigning     = errors.New("signing token")
 	ErrJwtTokenClaims      = errors.New("invalid claims")
@@ -73,9 +73,15 @@ func NewException(code int, message string) *Exception {
 
 func ErrMapper(err error) (int, *Exception) {
 	switch {
+	// Common layer errors
+	case errors.Is(err, ErrNotImplemented):
+		return http.StatusNotImplemented, NewException(http.StatusNotImplemented, err.Error())
+
+	// Request layer errors
 	case errors.Is(err, ErrReqBindJson):
 		return http.StatusBadRequest, NewException(http.StatusBadRequest, err.Error())
 
+	// Database layer errors
 	case errors.Is(err, ErrDBConnPoolExhausted):
 		return http.StatusServiceUnavailable, NewException(http.StatusServiceUnavailable, err.Error())
 
@@ -97,6 +103,7 @@ func ErrMapper(err error) (int, *Exception) {
 	case errors.Is(err, ErrDBRecordDelete):
 		return http.StatusNotAcceptable, NewException(http.StatusNotAcceptable, err.Error())
 
+	// Auth layer errors
 	case errors.Is(err, ErrAuthInvalidPassword):
 		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())
 	case errors.Is(err, ErrAuthGenerateTokens):
@@ -106,6 +113,7 @@ func ErrMapper(err error) (int, *Exception) {
 	case errors.Is(err, ErrAuthUserNotChecked):
 		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())
 
+	// Jwt layer errors
 	case errors.Is(err, ErrJwtTokenInvalid):
 		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())
 	case errors.Is(err, ErrJwtTokenSigning):
@@ -115,16 +123,23 @@ func ErrMapper(err error) (int, *Exception) {
 	case errors.Is(err, ErrJwtTokenClaims):
 		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())
 
+	// 2FA layer errors
 	case errors.Is(err, Err2FAKeyGeneration):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
 
+	// Ctx layer errors
 	case errors.Is(err, ErrCtxError):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
 
+	// Email layer errors
 	case errors.Is(err, ErrEmailTemplateNotFound):
 		return http.StatusNoContent, NewException(http.StatusNoContent, err.Error())
 	case errors.Is(err, ErrEmailTemplateRendering):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
+
+	// Nats layer errors
+	case errors.Is(err, ErrNatsPublishTopic):
+		return http.StatusServiceUnavailable, NewException(http.StatusServiceUnavailable, err.Error())
 	default:
 		return http.StatusInternalServerError, NewException(http.StatusInternalServerError, err.Error())
 	}

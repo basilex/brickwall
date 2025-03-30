@@ -1,9 +1,24 @@
 services:
   #
+  # Nginx section
+  #
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    depends_on:
+      - api
+    volumes:
+      - ./volume/nginx/log:/var/log/nginx
+      - ./resource/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - bsp_net
+  #
   # NATS cluster node1 section
   #
   nats_n1:
-    image: nats:latest
+    image: nats:alpine
     container_name: nats_n1
     restart: on-failure
     ports:
@@ -14,16 +29,14 @@ services:
     networks:
       - bsp_net
     environment:
-      - NATS_CLUSTER_ADVERTISE=nats_n1:6222
-      - NATS_SERVER_NAME=nats_n1
       - NATS_LISTEN_CLIENTS=0.0.0.0
       - NATS_LISTEN_CLUSTER=0.0.0.0
+      - NATS_CLUSTER_ADVERTISE=nats_n1:6222
+      - NATS_SERVER_NAME=nats_n1
       - NATS_ROUTE_PORT=6222
-      - NATS_JETSTREAM=true
-      - NATS_JETSTREAM_DIR=./volume/nats/jetstream
-    command: ["-js"]
+    command: "--jetstream --store_dir ./volume/nats --cluster_name nats_cluster"
     healthcheck:
-      test: ["CMD", "nats_server", "--signal", "healthz"]
+      test: ["CMD", "pgrep", "-f", "nats-server"]
       interval: 5s
       retries: 5
       timeout: 2s
@@ -31,7 +44,7 @@ services:
   # NATS cluster node2 section
   #
   nats_n2:
-    image: nats:latest
+    image: nats:alpine
     container_name: nats_n2
     restart: on-failure
     ports:
@@ -42,16 +55,14 @@ services:
     networks:
       - bsp_net
     environment:
-      - NATS_CLUSTER_ADVERTISE=nats_n2:6222
-      - NATS_SERVER_NAME=nats_n2
       - NATS_LISTEN_CLIENTS=0.0.0.0
       - NATS_LISTEN_CLUSTER=0.0.0.0
+      - NATS_CLUSTER_ADVERTISE=nats_n2:6222
+      - NATS_SERVER_NAME=nats_n2
       - NATS_ROUTE_PORT=6222
-      - NATS_JETSTREAM=true
-      - NATS_JETSTREAM_DIR=./volume/nats/jetstream
-    command: ["-js"]
+    command: "--jetstream --store_dir ./volume/nats --cluster_name nats_cluster"
     healthcheck:
-      test: ["CMD", "nats_server", "--signal", "healthz"]
+      test: ["CMD", "pgrep", "-f", "nats-server"]
       interval: 5s
       retries: 5
       timeout: 2s
@@ -61,7 +72,7 @@ services:
   # NATS cluster node3 section
   #
   nats_n3:
-    image: nats:latest
+    image: nats:alpine
     container_name: nats_n3
     restart: on-failure
     ports:
@@ -72,16 +83,14 @@ services:
     networks:
       - bsp_net
     environment:
-      - NATS_CLUSTER_ADVERTISE=nats_n3:6222
-      - NATS_SERVER_NAME=nats_n3
       - NATS_LISTEN_CLIENTS=0.0.0.0
       - NATS_LISTEN_CLUSTER=0.0.0.0
+      - NATS_CLUSTER_ADVERTISE=nats_n3:6222
+      - NATS_SERVER_NAME=nats_n3
       - NATS_ROUTE_PORT=6222
-      - NATS_JETSTREAM=true
-      - NATS_JETSTREAM_DIR=./volume/nats/jetstream
-    command: ["-js"]
+    command: "--jetstream --store_dir ./volume/nats --cluster_name nats_cluster"
     healthcheck:
-      test: ["CMD", "nats_server", "--signal", "healthz"]
+      test: ["CMD", "pgrep", "-f", "nats-server"]
       interval: 5s
       retries: 5
       timeout: 2s
@@ -137,9 +146,9 @@ services:
       - bsp_net
     ports:
       - "8082:8081"
-    # depends_on:
-      # nats_n1:
-      #   condition: service_healthy
+    depends_on:
+      nats_n1:
+        condition: service_healthy
   #
   # Api section
   #
@@ -158,11 +167,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      # nats_n1:
-      #   condition: service_healthy
+      nats_n1:
+        condition: service_healthy
       redis:
         condition: service_healthy
-  #
+  #  #
   # Auth section
   #
   auth:
@@ -177,8 +186,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      # nats_n1:
-      #   condition: service_healthy
+      nats_n1:
+        condition: service_healthy
       redis:
         condition: service_healthy
 #

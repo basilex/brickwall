@@ -20,9 +20,7 @@ RUN strip bsp
 FROM debian:bullseye
 
 RUN apt-get update
-RUN apt-get install -y bash
-RUN apt-get install -y curl
-RUN apt-get install -y wget
+RUN apt-get install -y bash curl
 
 WORKDIR /app
 
