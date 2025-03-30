@@ -1,6 +1,8 @@
 #
 # Makefile
-# Brickwall SaaS Platform Service
+# Brickwall Platform Service
+# Copyright (C) 2025 by Brickwall Inc. All Rights Reserved
+# --------------------------------------------------------
 #
 # Base environment
 #
@@ -8,6 +10,7 @@ svc := $(or $(BSP_SVC),bsp)
 env := $(or $(BSP_ENV),dev)
 ver := $(or $(BSP_VER),0.1.0)
 sys := $(or $(BSP_SYS),brickwall)
+cert := $(or $(BSP_CERT),./resource/cert)
 
 img := $(or $(BSP_IMG),$(sys)/$(svc):$(ver))
 #
@@ -26,6 +29,15 @@ ldflags += -X main.Staging=$(staging)
 ldflags += -X main.Githash=$(githash)
 ldflags += -X main.Gobuild=$(gobuild)
 ldflags += -X main.Compile=$(compile)
+#
+# Check the dependend bins
+#
+bins = go openssl
+
+-include internal/storage/Makefile.inc
+
+checkfor := $(foreach exec,$(bins), \
+	$(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH)))
 #
 # Main entry point
 #
@@ -60,10 +72,15 @@ app-down:
 app-clean:
 	@docker rm -v $(shell docker ps --filter status=exited -q)
 	@docker rmi $(img)
+app-cert:
+	# <dev> mode using self signed certificate
+	# <prod> mode using let's encrypt for the real domain
+	@openssl req -x509 -newkey rsa:4096 \
+		-keyout $(cert)/$(svc).key -out $(cert)/$(svc).crt -days 365 -nodes
 app-prune:
 	@docker system prune -af
 
-.PHONY: app-up app-down app-clean app-prune
+.PHONY: app-up app-down app-clean app-cert app-prune
 #
 # Dbs section
 #

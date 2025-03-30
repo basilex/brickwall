@@ -16,9 +16,9 @@ const (
 	DefAppMode         string = "debug"
 	DefEncoderStrategy string = "msgpack"
 
-	DefTlsSslEnabled bool   = false
-	DefTlsSslCert    string = "cert/server.crt"
-	DefTlsSslKey     string = "cert/server.key"
+	DefTlsEnabled  bool   = false
+	DefTlsCertFile string = "/app/cert/bsp.crt"
+	DefTlsKeyFile  string = "/app/cert/bsp.key"
 
 	DefServerAddress         string        = "api:8081"
 	DefServerReadTimeout     time.Duration = time.Duration(3 * time.Second)
@@ -110,8 +110,6 @@ func NewEnvProvider(ctx context.Context) IEnvProvider {
 		if err := godotenv.Load(); err != nil {
 			slog.Error("bsp: failed to load <.env> environment")
 			os.Exit(2)
-		} else {
-			slog.Info("bsp: environment <.env> loaded successfully")
 		}
 		for _, key := range os.Environ() {
 			pair := strings.SplitN(key, "=", 2)

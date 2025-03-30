@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"log"
 	"log/slog"
 	"net/http"
 
@@ -27,26 +26,30 @@ func (rcv *ServerProvider) Startup(r IRouterProvider) IServerProvider {
 	env := rcv.ctx.Value(common.KeyEnvProvider).(IEnvProvider)
 
 	go func() {
-		slog.Info(
-			"http/s server started", "bind", env.GetString("SERVER_ADDRESS", DefServerAddress),
-		)
-		if env.GetBool("TLS_SSL_ENABLED", DefTlsSslEnabled) {
-			//
-			// TODO: implement https server startup
-			//
-			log.Fatalf("https server not implemented yet, exiting...")
-		} else {
-			rcv.server = &http.Server{
-				Addr:           env.GetString("SERVER_ADDRESS", DefServerAddress),
-				ReadTimeout:    env.GetDuration("SERVER_READ_TIMEOUT", DefServerReadTimeout),
-				WriteTimeout:   env.GetDuration("SERVER_WRITE_TIMEOUT", DefServerWriteTimeout),
-				MaxHeaderBytes: int(env.GetInt("SERVER_MAX_HEADER_BYTES", DefServerMaxHeaderBytes)),
-				Handler:        r.Engine(),
-			}
+		rcv.server = &http.Server{
+			Addr:           env.GetString("SERVER_ADDRESS", DefServerAddress),
+			ReadTimeout:    env.GetDuration("SERVER_READ_TIMEOUT", DefServerReadTimeout),
+			WriteTimeout:   env.GetDuration("SERVER_WRITE_TIMEOUT", DefServerWriteTimeout),
+			MaxHeaderBytes: int(env.GetInt("SERVER_MAX_HEADER_BYTES", DefServerMaxHeaderBytes)),
+			Handler:        r.Engine(),
+		}
+		if env.GetBool("TLS_ENABLED", DefTlsEnabled) {
+			certFile := env.GetString("TLS_CERT_FILE", DefTlsCertFile) // Замените на путь к вашему сертификату
+			keyFile := env.GetString("TLS_KEY_FILE", DefTlsKeyFile)
 
-			if err := rcv.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				slog.Error("http/s server stopped", "error", err.Error())
+			if err := rcv.server.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+				slog.Error("https server stopped", "error", err.Error())
 			}
+			slog.Info(
+				"https server started", "bind", env.GetString("SERVER_ADDRESS", DefServerAddress),
+			)
+		} else {
+			if err := rcv.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				slog.Error("http server stopped", "error", err.Error())
+			}
+			slog.Info(
+				"http server started", "bind", env.GetString("SERVER_ADDRESS", DefServerAddress),
+			)
 		}
 	}()
 	return rcv
