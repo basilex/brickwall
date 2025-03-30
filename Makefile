@@ -44,6 +44,7 @@ checkfor := $(foreach exec,$(bins), \
 all:
 	@echo '*** Brickwall Makefile sections'
 	@echo '    ---------------------------'
+
 	@echo '>>> dbs management section'
 	@echo '  - dbs-gen     : Generate sqlc db layer'
 	@echo '  - dbs-up      : Install db schema and default data'
@@ -53,6 +54,7 @@ all:
 	@echo '  - dbs-drop    : Drop entire db schema (all the data purged)'
 	@echo '  - dbs-version : Show the db migration version'
 	@echo
+
 	@echo '>>> app management section'
 	@echo '  - app-tidy    : Ensure that all imports are satisfied'
 	@echo '  - app-build   : Build the application inside the linux container'
@@ -61,6 +63,13 @@ all:
 	@echo '  - app-clean   : Remove all the docker exited containers'
 	@echo '  - app-cert    : Generate app TLS/SSL certificates'
 	@echo '  - app-prune   : Prune all in the local docker env'
+	@echo
+
+	@echo '>>> docker swarm management section'
+	@echo '  - stack-load  : Load configs/secrets to docker registry'
+	@echo '  - stack-clean : Clean all the configs/secrets from docker registry'
+	@echo '  - stack-deploy: Deploy containers to the docker swarm stack'
+	@echo '  - stack-remove: Completely remove docker stack (with volumes)'
 
 	@exit 0
 
@@ -85,9 +94,9 @@ app-build:
 # Composer section
 #
 app-up:
-	@docker compose -f compose-local.yml up --build
+	@docker compose -f $(svc)-local.yml up --build
 app-down:
-	@docker compose -f compose-local.yml down  --remove-orphans
+	@docker compose -f $(svc)-local.yml down  --remove-orphans
 app-clean:
 	@docker rm -v $(shell docker ps --filter status=exited -q)
 	@docker rmi $(img)
@@ -100,6 +109,20 @@ app-prune:
 	@docker system prune -af
 
 .PHONY: app-up app-down app-clean app-cert app-prune
+#
+# Swarm section
+#
+stack-load:
+	@sh $(svc)-env.sh $(svc)
+stack-clean:
+	@docker secret ls -q | xargs -r docker secret rm
+	@docker config ls -q | xargs -r docker config rm
+stack-deploy:
+	@docker stack deploy -c $(svc)-stack.yml $(svc)
+stack-remove:
+	@docker stack rm $(svc)
+	
+.PHONY: stack-load stack-clean stack-deploy stack-remove
 #
 # Dbs section
 #

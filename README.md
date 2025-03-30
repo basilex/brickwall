@@ -87,6 +87,12 @@ $ make
   - app-clean   : Remove all the docker exited containers
   - app-cert    : Generate app TLS/SSL certificates
   - app-prune   : Prune all in the local docker env
+
+>>> docker swarm management section
+  - stack-load  : Load configs/secrets to docker registry
+  - stack-clean : Clean all the configs/secrets from docker registry
+  - stack-deploy: Deploy containers to the docker swarm stack
+  - stack-remove: Completely remove docker stack (with volumes)
 ```
 
 ### 4. Playing with an API

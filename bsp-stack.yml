@@ -1,0 +1,141 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - ./volume/nginx/log:/var/log/nginx
+      - ./resource/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - bsp_net
+
+  nats_n1:
+    image: nats:alpine
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - nats_n1_data:/data
+    networks:
+      - bsp_net
+    environment:
+      - NATS_LISTEN_CLIENTS=0.0.0.0
+      - NATS_LISTEN_CLUSTER=0.0.0.0
+      - NATS_CLUSTER_ADVERTISE=nats_n1:6222
+      - NATS_SERVER_NAME=nats_n1
+      - NATS_ROUTE_PORT=6222
+    command: "--jetstream --store_dir /data --cluster_name nats_cluster"
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "nats-server"]
+      interval: 5s
+      retries: 5
+      timeout: 2s
+
+  nats_n2:
+    image: nats:alpine
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - nats_n2_data:/data
+    networks:
+      - bsp_net
+    environment:
+      - NATS_LISTEN_CLIENTS=0.0.0.0
+      - NATS_LISTEN_CLUSTER=0.0.0.0
+      - NATS_CLUSTER_ADVERTISE=nats_n2:6222
+      - NATS_SERVER_NAME=nats_n2
+      - NATS_ROUTE_PORT=6222
+    command: "--jetstream --store_dir /data --cluster_name nats_cluster"
+    depends_on:
+      - nats_n1
+
+  postgres:
+    image: postgres:17
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - bsp_net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "system", "-d", "bspdb_dev"]
+      interval: 5s
+      retries: 5
+      timeout: 2s
+
+  redis:
+    image: redis:7.4
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - bsp_net
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+      timeout: 2s
+
+  smtp:
+    image: brickwall:0.1.0
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    command: "/app/bsp smtp"
+    networks:
+      - bsp_net
+    depends_on:
+      - nats_n1
+
+  api:
+    image: brickwall:0.1.0
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    command: "/app/bsp api"
+    networks:
+      - bsp_net
+    depends_on:
+      - postgres
+      - nats_n1
+      - redis
+
+  auth:
+    image: brickwall:0.1.0
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    command: "/app/bsp auth"
+    networks:
+      - bsp_net
+    depends_on:
+      - postgres
+      - nats_n1
+      - redis
+
+networks:
+  bsp_net:
+    driver: overlay
+
+volumes:
+  nats_n1_data:
+  nats_n2_data:
+  postgres_data:
+  redis_data:
