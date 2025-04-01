@@ -13,21 +13,28 @@ select count(*) from contact where user_id = @user_id;
 
 -- name: ContactSelect :many
 select *
-  from contact p
+  from contact
  order by @sql_order::text
  limit @sql_limit offset @sql_offset;
 
 -- name: ContactSelectByID :one
-select * from contact p where p.id = @id;
+select * from contact c where c.id = @id;
 
 -- name: ContactSelectByUserID :many
-select * from contact p where p.user_id = @user_id order by p.class;
+select * from contact c where c.user_id = @user_id order by c.class;
 
 -- name: ContactSelectByUserIDClass :many
-select * from contact p
- where p.user_id = @user_id
-   and p.class = @class
-   and p.content = @content;
+select * from contact c
+ where c.user_id = @user_id
+   and c.class = @class
+   and c.content = @content;
+
+-- name: ContactSelectUserByEmail :one
+select u.id, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at
+  from users u
+  join contact c on u.id = c.user_id
+where c.class = 'email'
+  and c.content = @content;
 
 -- name: ContactUpdateByID :one
 update contact
@@ -35,4 +42,4 @@ update contact
  where id = @id returning *;
 
 -- name: ContactDeleteByID :one
-delete from users u where u.id = @id returning id;
+delete from contact c where c.id = @id returning id;

@@ -170,7 +170,7 @@ func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthSigni
 func (rcv *AuthService) RefreshTokens(req *exchange.AuthTokenRefreshReq) (*exchange.AuthTokens, error) {
 	accessToken, refreshToken, err := rcv.jwtProvider.RefreshTokens(req.Token)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", common.ErrAuthGenerateTokens, err)
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthRefreshTokens, err)
 	}
 	return &exchange.AuthTokens{
 		Access:  accessToken,

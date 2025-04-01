@@ -7,6 +7,8 @@ package dbs
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const contactCount = `-- name: ContactCount :one
@@ -38,12 +40,12 @@ func (q *Queries) ContactCountByUserID(ctx context.Context, userID string) (int6
 }
 
 const contactDeleteByID = `-- name: ContactDeleteByID :one
-delete from users u where u.id = $1 returning id
+delete from contact c where c.id = $1 returning id
 `
 
 // ContactDeleteByID
 //
-//	delete from users u where u.id = $1 returning id
+//	delete from contact c where c.id = $1 returning id
 func (q *Queries) ContactDeleteByID(ctx context.Context, id string) (string, error) {
 	row := q.db.QueryRow(ctx, contactDeleteByID, id)
 	err := row.Scan(&id)
@@ -87,7 +89,7 @@ func (q *Queries) ContactNew(ctx context.Context, arg *ContactNewParams) (*Conta
 
 const contactSelect = `-- name: ContactSelect :many
 select id, user_id, class, content, created_at, updated_at
-  from contact p
+  from contact
  order by $1::text
  limit $3 offset $2
 `
@@ -101,7 +103,7 @@ type ContactSelectParams struct {
 // ContactSelect
 //
 //	select id, user_id, class, content, created_at, updated_at
-//	  from contact p
+//	  from contact
 //	 order by $1::text
 //	 limit $3 offset $2
 func (q *Queries) ContactSelect(ctx context.Context, arg *ContactSelectParams) ([]*Contact, error) {
@@ -132,12 +134,12 @@ func (q *Queries) ContactSelect(ctx context.Context, arg *ContactSelectParams) (
 }
 
 const contactSelectByID = `-- name: ContactSelectByID :one
-select id, user_id, class, content, created_at, updated_at from contact p where p.id = $1
+select id, user_id, class, content, created_at, updated_at from contact c where c.id = $1
 `
 
 // ContactSelectByID
 //
-//	select id, user_id, class, content, created_at, updated_at from contact p where p.id = $1
+//	select id, user_id, class, content, created_at, updated_at from contact c where c.id = $1
 func (q *Queries) ContactSelectByID(ctx context.Context, id string) (*Contact, error) {
 	row := q.db.QueryRow(ctx, contactSelectByID, id)
 	var i Contact
@@ -153,12 +155,12 @@ func (q *Queries) ContactSelectByID(ctx context.Context, id string) (*Contact, e
 }
 
 const contactSelectByUserID = `-- name: ContactSelectByUserID :many
-select id, user_id, class, content, created_at, updated_at from contact p where p.user_id = $1 order by p.class
+select id, user_id, class, content, created_at, updated_at from contact c where c.user_id = $1 order by c.class
 `
 
 // ContactSelectByUserID
 //
-//	select id, user_id, class, content, created_at, updated_at from contact p where p.user_id = $1 order by p.class
+//	select id, user_id, class, content, created_at, updated_at from contact c where c.user_id = $1 order by c.class
 func (q *Queries) ContactSelectByUserID(ctx context.Context, userID string) ([]*Contact, error) {
 	rows, err := q.db.Query(ctx, contactSelectByUserID, userID)
 	if err != nil {
@@ -187,10 +189,10 @@ func (q *Queries) ContactSelectByUserID(ctx context.Context, userID string) ([]*
 }
 
 const contactSelectByUserIDClass = `-- name: ContactSelectByUserIDClass :many
-select id, user_id, class, content, created_at, updated_at from contact p
- where p.user_id = $1
-   and p.class = $2
-   and p.content = $3
+select id, user_id, class, content, created_at, updated_at from contact c
+ where c.user_id = $1
+   and c.class = $2
+   and c.content = $3
 `
 
 type ContactSelectByUserIDClassParams struct {
@@ -201,10 +203,10 @@ type ContactSelectByUserIDClassParams struct {
 
 // ContactSelectByUserIDClass
 //
-//	select id, user_id, class, content, created_at, updated_at from contact p
-//	 where p.user_id = $1
-//	   and p.class = $2
-//	   and p.content = $3
+//	select id, user_id, class, content, created_at, updated_at from contact c
+//	 where c.user_id = $1
+//	   and c.class = $2
+//	   and c.content = $3
 func (q *Queries) ContactSelectByUserIDClass(ctx context.Context, arg *ContactSelectByUserIDClassParams) ([]*Contact, error) {
 	rows, err := q.db.Query(ctx, contactSelectByUserIDClass, arg.UserID, arg.Class, arg.Content)
 	if err != nil {
@@ -230,6 +232,46 @@ func (q *Queries) ContactSelectByUserIDClass(ctx context.Context, arg *ContactSe
 		return nil, err
 	}
 	return items, nil
+}
+
+const contactSelectUserByEmail = `-- name: ContactSelectUserByEmail :one
+select u.id, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at
+  from users u
+  join contact c on u.id = c.user_id
+where c.class = 'email'
+  and c.content = $1
+`
+
+type ContactSelectUserByEmailRow struct {
+	ID        string           `json:"id"`
+	Username  string           `json:"username"`
+	IsBlocked bool             `json:"is_blocked"`
+	BlockedAt pgtype.Timestamp `json:"blocked_at"`
+	IsChecked bool             `json:"is_checked"`
+	CheckedAt pgtype.Timestamp `json:"checked_at"`
+	VisitedAt pgtype.Timestamp `json:"visited_at"`
+}
+
+// ContactSelectUserByEmail
+//
+//	select u.id, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at
+//	  from users u
+//	  join contact c on u.id = c.user_id
+//	where c.class = 'email'
+//	  and c.content = $1
+func (q *Queries) ContactSelectUserByEmail(ctx context.Context, content string) (*ContactSelectUserByEmailRow, error) {
+	row := q.db.QueryRow(ctx, contactSelectUserByEmail, content)
+	var i ContactSelectUserByEmailRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.IsBlocked,
+		&i.BlockedAt,
+		&i.IsChecked,
+		&i.CheckedAt,
+		&i.VisitedAt,
+	)
+	return &i, err
 }
 
 const contactUpdateByID = `-- name: ContactUpdateByID :one
