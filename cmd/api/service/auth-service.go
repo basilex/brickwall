@@ -17,6 +17,10 @@ import (
 type IAuthService interface {
 	Signup(*exchange.AuthSignupReq) (*dbs.UserNewRow, error)
 	Signin(*exchange.AuthSigninReq) (*exchange.AuthSigninRes, error)
+	RefreshTokens(*exchange.AuthTokenRefreshReq) (*exchange.AuthTokens, error)
+	InvalidateToken(*exchange.AuthTokenInvalidateReq) error
+	ResetPassword(*exchange.AuthPasswordResetReq) error
+	ChangePassword(*exchange.AuthPasswordChangeReq) error
 	Signout() (bool, error)
 }
 type AuthService struct {
@@ -161,6 +165,45 @@ func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthSigni
 		},
 	}
 	return res, nil
+}
+
+func (rcv *AuthService) RefreshTokens(req *exchange.AuthTokenRefreshReq) (*exchange.AuthTokens, error) {
+	accessToken, refreshToken, err := rcv.jwtProvider.RefreshTokens(req.Token)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthGenerateTokens, err)
+	}
+	return &exchange.AuthTokens{
+		Access:  accessToken,
+		Refresh: refreshToken,
+	}, nil
+}
+
+func (rcv *AuthService) InvalidateToken(req *exchange.AuthTokenInvalidateReq) error {
+	if !rcv.jwtProvider.IsTokenInvalidated(req.Token) {
+		return fmt.Errorf("%w: %v", common.ErrAuthInvalidateToken, errors.New("token already invalidated"))
+	}
+	if err := rcv.jwtProvider.InvalidateToken(req.Token); err != nil {
+		return fmt.Errorf("%w: %v", common.ErrAuthInvalidateToken, err)
+	}
+	return nil
+}
+
+func (rcv *AuthService) ResetPassword(*exchange.AuthPasswordResetReq) error {
+	// get the user credentials
+	// check for blocked, checked
+	// generate new tokens for temporary access
+	// send email for confirmation
+
+	return nil
+}
+
+func (rcv *AuthService) ChangePassword(*exchange.AuthPasswordChangeReq) error {
+	// validate temporary token
+	// get user from db
+	// generate new passsword and hash it
+	// update password in the db with new password hash
+	// invalidate temporary token
+	return nil
 }
 
 func (rcv *AuthService) Signout() (bool, error) {

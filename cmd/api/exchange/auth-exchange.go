@@ -19,9 +19,10 @@ type AuthTokenInvalidateReq struct {
 	Token string `json:"token" binding:"required"`
 }
 type AuthPasswordResetReq struct {
-	Password string `json:"password" binding:"required,min=4,max=72"`
+	Email string `json:"email" binding:"required,email,max=255"`
 }
 type AuthPasswordChangeReq struct {
+	Token    string `json:"token" binding:"required,max=255"`
 	Password string `json:"password" binding:"required,min=4,max=72"`
 }
 

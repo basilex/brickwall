@@ -97,7 +97,7 @@ func (rcv *JwtProvider) ValidateToken(tokenString string) (*Claims, error) {
 }
 
 func (rcv *JwtProvider) InvalidateToken(tokenString string) error {
-	return rcv.redis.Set(rcv.ctx, tokenString, common.JwtTokenInvalid, rcv.accessExpiration).Err()
+	return rcv.redis.Set(rcv.ctx, tokenString, common.JwtTokenInvalid, rcv.refreshExpiration).Err()
 }
 
 func (rcv *JwtProvider) IsTokenInvalidated(tokenString string) bool {
