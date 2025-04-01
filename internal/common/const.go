@@ -28,7 +28,8 @@ const (
 
 const (
 	// NATS subjects/topics
-	TopicUserRegistrationEmail KeyString = "topic.user.registration.email"
+	TopicUserRegistrationEmail  KeyString = "topic.user.registration.email"
+	TopicUserResetPasswordEmail KeyString = "topic.user.reset.password.email"
 )
 
 const (

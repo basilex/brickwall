@@ -207,7 +207,7 @@ func (rcv *AuthService) ChangePassword(*exchange.AuthPasswordChangeReq) error {
 }
 
 func (rcv *AuthService) Signout() (bool, error) {
-	// TODO: this value located in gin.Context
+	// TODO: this value is located in gin.Context
 	refreshToken := rcv.ctx.Value(common.KeyCtxRefreshToken)
 	if refreshToken == nil {
 		return false, fmt.Errorf("%w: %v", common.ErrCtxError, errors.New("refresh token not found"))
@@ -216,7 +216,7 @@ func (rcv *AuthService) Signout() (bool, error) {
 	return true, fmt.Errorf("%w: %v", common.ErrNotImplemented, errors.New("Auth.Signout()"))
 }
 
-// --------------------------------------------------------------------------------------
+// TODO: --------------------------------------------------------------------------------
 // func (rcv *AuthService) LoginWith2FA(userEmail, password, code string) (bool, error) {
 // 	// Заглушка проверки пароля (заменить на реальную логику)
 // 	if password != "correct_password" {

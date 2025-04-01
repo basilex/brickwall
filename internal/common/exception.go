@@ -28,6 +28,7 @@ var (
 	// Auth layer errors
 	ErrAuthInvalidPassword = errors.New("invalid password")
 	ErrAuthGenerateTokens  = errors.New("failed to generate tokens")
+	ErrAuthRefreshTokens   = errors.New("failed to refresh tokens")
 	ErrAuthResetPassword   = errors.New("failed to reset password")
 	ErrAuthChangePassword  = errors.New("failed to change password")
 	ErrAuthInvalidateToken = errors.New("failed to invalidate token")
@@ -110,6 +111,8 @@ func ErrMapper(err error) (int, *Exception) {
 	case errors.Is(err, ErrAuthInvalidPassword):
 		return http.StatusUnauthorized, NewException(http.StatusUnauthorized, err.Error())
 	case errors.Is(err, ErrAuthGenerateTokens):
+		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
+	case errors.Is(err, ErrAuthRefreshTokens):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
 	case errors.Is(err, ErrAuthInvalidateToken):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())

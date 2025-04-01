@@ -51,11 +51,13 @@ func NewAuthController(ctx context.Context, grp *gin.RouterGroup) IAuthControlle
 func (rcv *AuthController) Register() {
 	rcv.group.POST("/auth/signup", rcv.AuthSignup)
 	rcv.group.POST("/auth/signin", rcv.AuthSignin)
+	rcv.group.POST("/auth/signout", rcv.AuthSignout)
+
 	rcv.group.POST("/auth/token/refresh", rcv.AuthRefreshToken)
 	rcv.group.POST("/auth/token/invalidate", rcv.AuthInvalidateToken)
+
 	rcv.group.POST("/auth/password/reset", rcv.AuthResetPassword)
 	rcv.group.POST("/auth/password/change", rcv.AuthChangePassword)
-	rcv.group.POST("/auth/signout", rcv.AuthSignout)
 }
 
 func (rcv *AuthController) AuthSignup(c *gin.Context) {
