@@ -113,10 +113,12 @@ app-prune:
 # Swarm section
 #
 stack-load:
-	@sh $(svc)-env.sh $(svc)
+	@sh $(svc)-stack-env.sh
+	@docker config create bsp_configs_env bsp-stack-configs.env
+	@docker secret create bsp_secrets_env bsp-stack-secrets.env
 stack-clean:
-	@docker secret ls -q | xargs -r docker secret rm
-	@docker config ls -q | xargs -r docker config rm
+	@docker config rm bsp_configs_env
+	@docker secret rm bsp_secrets_env
 stack-deploy:
 	@docker stack deploy -c $(svc)-stack.yml $(svc)
 stack-remove:

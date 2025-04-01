@@ -73,6 +73,12 @@ services:
       interval: 5s
       retries: 5
       timeout: 2s
+    configs:
+      - source: bsp_configs_env
+        target: /run/configs/bsp_secrets_env
+    secrets:
+      - source: bsp_secrets_env
+        target: /run/secrets/bsp_secrets_env
 
   redis:
     image: redis:7.4
@@ -89,6 +95,12 @@ services:
       interval: 5s
       retries: 5
       timeout: 2s
+    configs:
+      - source: bsp_configs_env
+        target: /run/configs/bsp_secrets_env
+    secrets:
+      - source: bsp_secrets_env
+        target: /run/secrets/bsp_secrets_env
 
   smtp:
     image: brickwall:0.1.0
@@ -96,11 +108,26 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-    command: "/app/bsp smtp"
     networks:
       - bsp_net
     depends_on:
       - nats_n1
+    configs:
+      - source: bsp_configs_env
+        target: /run/configs/bsp_secrets_env
+    secrets:
+      - source: bsp_secrets_env
+        target: /run/secrets/bsp_secrets_env
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      set -e
+      if [ -f /run/configs/bsp_configs_env ]; then
+        . /run/configs/bsp_configs_env
+      fi
+      if [ -f /run/secrets/bsp_secrets_env ]; then
+        . /run/secrets/bsp_secrets_env
+      fi
+      exec /app/bsp smtp
 
   api:
     image: brickwall:0.1.0
@@ -108,13 +135,28 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-    command: "/app/bsp api"
     networks:
       - bsp_net
     depends_on:
       - postgres
       - nats_n1
       - redis
+    configs:
+      - source: bsp_configs_env
+        target: /run/configs/bsp_secrets_env
+    secrets:
+      - source: bsp_secrets_env
+        target: /run/secrets/bsp_secrets_env
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      set -e
+      if [ -f /run/configs/bsp_configs_env ]; then
+        . /run/configs/bsp_configs_env
+      fi
+      if [ -f /run/secrets/bsp_secrets_env ]; then
+        . /run/secrets/bsp_secrets_env
+      fi
+      exec /app/bsp api
 
   auth:
     image: brickwall:0.1.0
@@ -122,13 +164,36 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-    command: "/app/bsp auth"
     networks:
       - bsp_net
     depends_on:
       - postgres
       - nats_n1
       - redis
+    configs:
+      - source: bsp_configs_env
+        target: /run/configs/bsp_secrets_env
+    secrets:
+      - source: bsp_secrets_env
+        target: /run/secrets/bsp_secrets_env
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      set -e
+      if [ -f /run/configs/bsp_configs_env ]; then
+        . /run/configs/bsp_configs_env
+      fi
+      if [ -f /run/secrets/bsp_secrets_env ]; then
+        . /run/secrets/bsp_secrets_env
+      fi
+      exec /app/bsp auth
+
+configs:
+  bsp_configs_env:
+    external: true
+
+secrets:
+  bsp_secrets_env:
+    external: true
 
 networks:
   bsp_net:

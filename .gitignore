@@ -2,4 +2,7 @@
 .env.local
 
 bsp
+bsp-stack-configs.env
+bsp-stack-secrets.env
+
 volume
