@@ -150,11 +150,7 @@ func (rcv *UserService) UserUpdateIsCheckedByID(req *exchange.UserUpdateIsChecke
 }
 
 func (rcv *UserService) UserUpdateVisitedAtByID(req *exchange.UserUpdateVisitedAtByIDReq) (*dbs.UserUpdateVisitedAtByIDRow, error) {
-	params := &dbs.UserUpdateVisitedAtByIDParams{
-		ID:        req.ID,
-		VisitedAt: req.VisitedAt,
-	}
-	res, err := rcv.queries.UserUpdateVisitedAtByID(context.Background(), params)
+	res, err := rcv.queries.UserUpdateVisitedAtByID(context.Background(), req.ID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("%w: %v", common.ErrDBNotFound, err)

@@ -388,15 +388,10 @@ func (q *Queries) UserUpdateIsCheckedByID(ctx context.Context, arg *UserUpdateIs
 
 const userUpdateVisitedAtByID = `-- name: UserUpdateVisitedAtByID :one
 update users
-   set visited_at = $1
- where id = $2
+   set visited_at = timezone('utc', now())
+ where id = $1
        returning id, username, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
 `
-
-type UserUpdateVisitedAtByIDParams struct {
-	VisitedAt pgtype.Timestamp `json:"visited_at"`
-	ID        string           `json:"id"`
-}
 
 type UserUpdateVisitedAtByIDRow struct {
 	ID        string           `json:"id"`
@@ -413,11 +408,11 @@ type UserUpdateVisitedAtByIDRow struct {
 // UserUpdateVisitedAtByID
 //
 //	update users
-//	   set visited_at = $1
-//	 where id = $2
+//	   set visited_at = timezone('utc', now())
+//	 where id = $1
 //	       returning id, username, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at
-func (q *Queries) UserUpdateVisitedAtByID(ctx context.Context, arg *UserUpdateVisitedAtByIDParams) (*UserUpdateVisitedAtByIDRow, error) {
-	row := q.db.QueryRow(ctx, userUpdateVisitedAtByID, arg.VisitedAt, arg.ID)
+func (q *Queries) UserUpdateVisitedAtByID(ctx context.Context, id string) (*UserUpdateVisitedAtByIDRow, error) {
+	row := q.db.QueryRow(ctx, userUpdateVisitedAtByID, id)
 	var i UserUpdateVisitedAtByIDRow
 	err := row.Scan(
 		&i.ID,

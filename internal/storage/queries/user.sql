@@ -52,7 +52,7 @@ update users
 
 -- name: UserUpdateVisitedAtByID :one
 update users
-   set visited_at = @visited_at
+   set visited_at = timezone('utc', now())
  where id = @id
        returning id, username, is_blocked, is_checked, blocked_at, checked_at, visited_at, created_at, updated_at;
 
