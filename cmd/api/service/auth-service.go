@@ -17,11 +17,13 @@ import (
 type IAuthService interface {
 	Signup(*exchange.AuthSignupReq) (*exchange.AuthUserSignupRes, error)
 	Signin(*exchange.AuthSigninReq) (*exchange.AuthUserSigninRes, error)
+	Signout() (bool, error)
+
 	RefreshTokens(*exchange.AuthTokenRefreshReq) (*exchange.AuthTokens, error)
 	InvalidateToken(*exchange.AuthTokenInvalidateReq) error
+
 	ResetPassword(*exchange.AuthPasswordResetReq) (*exchange.AuthUserResetRes, error)
 	ChangePassword(*exchange.AuthPasswordChangeReq) (*exchange.AuthUserChangeRes, error)
-	Signout() (bool, error)
 }
 type AuthService struct {
 	ctx     context.Context
@@ -188,6 +190,16 @@ func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthUserS
 	return res, nil
 }
 
+func (rcv *AuthService) Signout() (bool, error) {
+	// TODO: this value is located in gin.Context
+	refreshToken := rcv.ctx.Value(common.KeyCtxRefreshToken)
+	if refreshToken == nil {
+		return false, fmt.Errorf("%w: %v", common.ErrCtxError, errors.New("refresh token not found"))
+	}
+	rcv.jwtProvider.DeleteToken(refreshToken.(string))
+	return true, fmt.Errorf("%w: %v", common.ErrNotImplemented, errors.New("Auth.Signout()"))
+}
+
 func (rcv *AuthService) RefreshTokens(req *exchange.AuthTokenRefreshReq) (*exchange.AuthTokens, error) {
 	accessToken, refreshToken, err := rcv.jwtProvider.RefreshTokens(req.Token)
 	if err != nil {
@@ -312,16 +324,6 @@ func (rcv *AuthService) ChangePassword(req *exchange.AuthPasswordChangeReq) (*ex
 		UpdatedAt: updated.UpdatedAt,
 	}
 	return res, nil
-}
-
-func (rcv *AuthService) Signout() (bool, error) {
-	// TODO: this value is located in gin.Context
-	refreshToken := rcv.ctx.Value(common.KeyCtxRefreshToken)
-	if refreshToken == nil {
-		return false, fmt.Errorf("%w: %v", common.ErrCtxError, errors.New("refresh token not found"))
-	}
-	rcv.jwtProvider.DeleteToken(refreshToken.(string))
-	return true, fmt.Errorf("%w: %v", common.ErrNotImplemented, errors.New("Auth.Signout()"))
 }
 
 // TODO: --------------------------------------------------------------------------------

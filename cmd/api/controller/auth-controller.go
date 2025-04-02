@@ -58,6 +58,8 @@ func (rcv *AuthController) Register() {
 
 	rcv.group.POST("/auth/password/reset", rcv.AuthResetPassword)
 	rcv.group.POST("/auth/password/change", rcv.AuthChangePassword)
+
+	rcv.group.GET("/auth/me", rcv.AuthMe)
 }
 
 func (rcv *AuthController) AuthSignup(c *gin.Context) {
@@ -162,5 +164,8 @@ func (rcv *AuthController) AuthChangePassword(c *gin.Context) {
 	c.JSON(http.StatusOK, common.NewResponse(res))
 }
 
-func (rcv *AuthController) AuthMe(*gin.Context) {
+func (rcv *AuthController) AuthMe(c *gin.Context) {
+	c.JSON(http.StatusOK, common.NewResponse(
+		gin.H{"message": "not implemented yet"},
+	))
 }
