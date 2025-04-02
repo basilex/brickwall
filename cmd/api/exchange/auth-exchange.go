@@ -86,3 +86,13 @@ type AuthUserResetRes struct {
 	User   *AuthUserReset `json:"user"`
 	Tokens *AuthTokens    `json:"tokens"`
 }
+
+// change response
+type AuthUserChangeRes struct {
+	ID        string           `json:"id"`
+	Username  string           `json:"username"`
+	CheckedAt pgtype.Timestamp `json:"checked_at"`
+	VisitedAt pgtype.Timestamp `json:"visited_at"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}

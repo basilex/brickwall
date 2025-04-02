@@ -20,7 +20,7 @@ type IAuthService interface {
 	RefreshTokens(*exchange.AuthTokenRefreshReq) (*exchange.AuthTokens, error)
 	InvalidateToken(*exchange.AuthTokenInvalidateReq) error
 	ResetPassword(*exchange.AuthPasswordResetReq) (*exchange.AuthUserResetRes, error)
-	ChangePassword(*exchange.AuthPasswordChangeReq) error
+	ChangePassword(*exchange.AuthPasswordChangeReq) (*exchange.AuthUserChangeRes, error)
 	Signout() (bool, error)
 }
 type AuthService struct {
@@ -63,12 +63,12 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*exchange.AuthUserS
 	qtx := rcv.queries.WithTx(trx)
 
 	// create user
-	passwordCrypted, _ := bcrypt.GenerateFromPassword(
+	passwordHash, _ := bcrypt.GenerateFromPassword(
 		[]byte(req.Password), bcrypt.DefaultCost,
 	)
 	user, err := qtx.UserNew(context.Background(), &dbs.UserNewParams{
 		Username: req.Email,
-		Password: string(passwordCrypted),
+		Password: string(passwordHash),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrDBRecordInsert, err)
@@ -200,7 +200,7 @@ func (rcv *AuthService) RefreshTokens(req *exchange.AuthTokenRefreshReq) (*excha
 }
 
 func (rcv *AuthService) InvalidateToken(req *exchange.AuthTokenInvalidateReq) error {
-	if !rcv.jwtProvider.IsTokenInvalidated(req.Token) {
+	if rcv.jwtProvider.IsTokenInvalidated(req.Token) {
 		return fmt.Errorf("%w: %v", common.ErrAuthInvalidateToken, errors.New("token already invalidated"))
 	}
 	if err := rcv.jwtProvider.InvalidateToken(req.Token); err != nil {
@@ -267,13 +267,51 @@ func (rcv *AuthService) ResetPassword(req *exchange.AuthPasswordResetReq) (*exch
 	return res, nil
 }
 
-func (rcv *AuthService) ChangePassword(*exchange.AuthPasswordChangeReq) error {
+func (rcv *AuthService) ChangePassword(req *exchange.AuthPasswordChangeReq) (*exchange.AuthUserChangeRes, error) {
+	ctx := context.Background()
+
 	// validate temporary token
-	// get user from db
+	claims, err := rcv.jwtProvider.ValidateToken(req.Token)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthValidateToken, err)
+	}
+
+	// get user credentials from db
+	user, err := rcv.queries.UserSelectByID(ctx, claims.UserID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("%w: %v", common.ErrDBNotFound, err)
+		} else {
+			return nil, fmt.Errorf("%w: %v", common.ErrDBRecordSelect, err)
+		}
+	}
+
 	// generate new passsword and hash it
+	passwordHash, _ := bcrypt.GenerateFromPassword(
+		[]byte(req.Password), bcrypt.DefaultCost,
+	)
+
 	// update password in the db with new password hash
-	// invalidate temporary token
-	return nil
+	updated, err := rcv.queries.UserUpdateCredentialsByID(ctx, &dbs.UserUpdateCredentialsByIDParams{
+		ID:       claims.ID,
+		Username: user.Username,
+		Password: string(passwordHash),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrDBRecordUpdate, err)
+	}
+
+	// invalidate temporary token (15min access)
+	// ...
+	res := &exchange.AuthUserChangeRes{
+		ID:        claims.ID,
+		Username:  updated.Username,
+		CheckedAt: updated.CheckedAt,
+		VisitedAt: updated.VisitedAt,
+		CreatedAt: updated.CreatedAt,
+		UpdatedAt: updated.UpdatedAt,
+	}
+	return res, nil
 }
 
 func (rcv *AuthService) Signout() (bool, error) {
@@ -288,12 +326,12 @@ func (rcv *AuthService) Signout() (bool, error) {
 
 // TODO: --------------------------------------------------------------------------------
 // func (rcv *AuthService) LoginWith2FA(userEmail, password, code string) (bool, error) {
-// 	// Заглушка проверки пароля (заменить на реальную логику)
+// 	// stub for password checking
 // 	if password != "correct_password" {
 // 		return false, errors.New("invalid credentials")
 // 	}
 
-// 	// Проверяем, включен ли 2FA (секрет должен быть в БД)
+// 	// check is the 2FA on?
 // 	secret := "user_saved_secret" // Достать из БД по userEmail
 // 	if secret != "" {
 // 		if !rcv.twoFA.VerifyCode(secret, code) {

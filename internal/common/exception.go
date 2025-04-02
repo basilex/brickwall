@@ -31,6 +31,7 @@ var (
 	ErrAuthRefreshTokens   = errors.New("failed to refresh tokens")
 	ErrAuthResetPassword   = errors.New("failed to reset password")
 	ErrAuthChangePassword  = errors.New("failed to change password")
+	ErrAuthValidateToken   = errors.New("failed to validate token")
 	ErrAuthInvalidateToken = errors.New("failed to invalidate token")
 	ErrAuthUserBlocked     = errors.New("user blocked")
 	ErrAuthUserNotChecked  = errors.New("user not checked")
@@ -113,6 +114,8 @@ func ErrMapper(err error) (int, *Exception) {
 	case errors.Is(err, ErrAuthGenerateTokens):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
 	case errors.Is(err, ErrAuthRefreshTokens):
+		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
+	case errors.Is(err, ErrAuthValidateToken):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
 	case errors.Is(err, ErrAuthInvalidateToken):
 		return http.StatusExpectationFailed, NewException(http.StatusExpectationFailed, err.Error())
