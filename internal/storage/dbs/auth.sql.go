@@ -49,7 +49,7 @@ func (q *Queries) AuthSelectUserCredentials(ctx context.Context, username string
 
 const authUpdateVisitedAt = `-- name: AuthUpdateVisitedAt :one
 update users set visited_at = now() where id = $1
-       returning id, username, checked_at, visited_at, created_at
+       returning id, username, checked_at, visited_at, created_at, updated_at
 `
 
 type AuthUpdateVisitedAtRow struct {
@@ -58,12 +58,13 @@ type AuthUpdateVisitedAtRow struct {
 	CheckedAt pgtype.Timestamp `json:"checked_at"`
 	VisitedAt pgtype.Timestamp `json:"visited_at"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 // AuthUpdateVisitedAt
 //
 //	update users set visited_at = now() where id = $1
-//	       returning id, username, checked_at, visited_at, created_at
+//	       returning id, username, checked_at, visited_at, created_at, updated_at
 func (q *Queries) AuthUpdateVisitedAt(ctx context.Context, id string) (*AuthUpdateVisitedAtRow, error) {
 	row := q.db.QueryRow(ctx, authUpdateVisitedAt, id)
 	var i AuthUpdateVisitedAtRow
@@ -73,6 +74,7 @@ func (q *Queries) AuthUpdateVisitedAt(ctx context.Context, id string) (*AuthUpda
 		&i.CheckedAt,
 		&i.VisitedAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }

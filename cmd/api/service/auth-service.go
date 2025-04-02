@@ -181,6 +181,7 @@ func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthUserS
 			CheckedAt: updated.CheckedAt,
 			VisitedAt: updated.VisitedAt,
 			CreatedAt: updated.CreatedAt,
+			UpdatedAt: updated.UpdatedAt,
 		},
 		Tokens: &exchange.AuthTokens{
 			Access:  accessToken,
@@ -260,6 +261,7 @@ func (rcv *AuthService) ResetPassword(req *exchange.AuthPasswordResetReq) (*exch
 			CheckedAt: user.CheckedAt,
 			VisitedAt: user.VisitedAt,
 			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
 		},
 		Tokens: &exchange.AuthTokens{
 			Access:  accessToken,

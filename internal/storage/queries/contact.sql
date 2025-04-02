@@ -30,7 +30,7 @@ select * from contact c
    and c.content = @content;
 
 -- name: ContactSelectUserByClass :one
-select u.id, c.content as email, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at, u.created_at
+select u.id, c.content as email, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at, u.created_at, u.updated_at
   from users u
   join contact c on u.id = c.user_id
 where c.class = @class

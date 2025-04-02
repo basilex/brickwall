@@ -65,6 +65,7 @@ type AuthUserSignin struct {
 	CheckedAt pgtype.Timestamp `json:"checked_at"`
 	VisitedAt pgtype.Timestamp `json:"visited_at"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 type AuthUserSigninRes struct {
@@ -80,6 +81,7 @@ type AuthUserReset struct {
 	CheckedAt pgtype.Timestamp `json:"checked_at"`
 	VisitedAt pgtype.Timestamp `json:"visited_at"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 type AuthUserResetRes struct {

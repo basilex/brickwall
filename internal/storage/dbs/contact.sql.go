@@ -235,7 +235,7 @@ func (q *Queries) ContactSelectByUserIDClass(ctx context.Context, arg *ContactSe
 }
 
 const contactSelectUserByClass = `-- name: ContactSelectUserByClass :one
-select u.id, c.content as email, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at, u.created_at
+select u.id, c.content as email, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at, u.created_at, u.updated_at
   from users u
   join contact c on u.id = c.user_id
 where c.class = $1
@@ -257,11 +257,12 @@ type ContactSelectUserByClassRow struct {
 	CheckedAt pgtype.Timestamp `json:"checked_at"`
 	VisitedAt pgtype.Timestamp `json:"visited_at"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 // ContactSelectUserByClass
 //
-//	select u.id, c.content as email, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at, u.created_at
+//	select u.id, c.content as email, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at, u.created_at, u.updated_at
 //	  from users u
 //	  join contact c on u.id = c.user_id
 //	where c.class = $1
@@ -279,6 +280,7 @@ func (q *Queries) ContactSelectUserByClass(ctx context.Context, arg *ContactSele
 		&i.CheckedAt,
 		&i.VisitedAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
