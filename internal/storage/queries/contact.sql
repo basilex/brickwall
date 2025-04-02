@@ -29,11 +29,11 @@ select * from contact c
    and c.class = @class
    and c.content = @content;
 
--- name: ContactSelectUserByEmail :one
-select u.id, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at
+-- name: ContactSelectUserByClass :one
+select u.id, c.content as email, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at, u.created_at
   from users u
   join contact c on u.id = c.user_id
-where c.class = 'email'
+where c.class = @class
   and c.content = @content;
 
 -- name: ContactUpdateByID :one

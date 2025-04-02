@@ -96,6 +96,7 @@ create table contact (
 create index contact_user_id on contact(user_id);
 
 create unique index contact_class_content_unq on contact(user_id, class, content);
+
 create unique index contact_class_email_unq on contact(content) where class = 'email';
 create unique index contact_class_phone_unq on contact(content) where class = 'phone';
 create unique index contact_class_mobile_unq on contact(content) where class = 'mobile';

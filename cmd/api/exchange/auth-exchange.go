@@ -27,7 +27,39 @@ type AuthPasswordChangeReq struct {
 }
 
 // responses
-type AuthUser struct {
+type AuthTokens struct {
+	Access  string `json:"access"`
+	Refresh string `json:"refresh"`
+}
+
+// signup response
+type AuthUserSignup struct {
+	ID        string           `json:"id"`
+	Username  string           `json:"username"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+type AuthUserContact struct {
+	ID        string           `json:"id"`
+	Class     string           `json:"class"`
+	Content   string           `json:"content"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+type AuthUserProfile struct {
+	ID        string           `json:"id"`
+	Firstname string           `json:"firstname"`
+	Lastname  string           `json:"lastname"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+type AuthUserSignupRes struct {
+	User    *AuthUserSignup  `json:"user"`
+	Contact *AuthUserContact `json:"contact"`
+	Profile *AuthUserProfile `json:"profile"`
+}
+
+// signin response
+type AuthUserSignin struct {
 	ID        string           `json:"id"`
 	Username  string           `json:"username"`
 	CheckedAt pgtype.Timestamp `json:"checked_at"`
@@ -35,11 +67,22 @@ type AuthUser struct {
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 }
 
-type AuthTokens struct {
-	Access  string `json:"access"`
-	Refresh string `json:"refresh"`
+type AuthUserSigninRes struct {
+	User   *AuthUserSignin `json:"user"`
+	Tokens *AuthTokens     `json:"tokens"`
 }
-type AuthSigninRes struct {
-	User   *AuthUser   `json:"user"`
-	Tokens *AuthTokens `json:"tokens"`
+
+// reset response
+type AuthUserReset struct {
+	ID        string           `json:"id"`
+	Email     string           `json:"email"`
+	Username  string           `json:"username"`
+	CheckedAt pgtype.Timestamp `json:"checked_at"`
+	VisitedAt pgtype.Timestamp `json:"visited_at"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+type AuthUserResetRes struct {
+	User   *AuthUserReset `json:"user"`
+	Tokens *AuthTokens    `json:"tokens"`
 }

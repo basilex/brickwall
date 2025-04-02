@@ -7,12 +7,12 @@ import (
 	"brickwall/internal/provider"
 )
 
-func UserRegistrationEmail(data []byte, encoder provider.IEncoder) error {
-	var user *exchange.AuthUserSignupRes
+func UserResetPasswordEmail(data []byte, encoder provider.IEncoder) error {
+	var user *exchange.AuthUserResetRes
 
 	if err := encoder.Decode(data, &user); err != nil {
 		return err
 	}
-	slog.Info("topic: user-registration-email received", "data", user)
+	slog.Info("topic: user-reset-password-email received", "data", user)
 	return nil
 }

@@ -15,11 +15,11 @@ import (
 )
 
 type IAuthService interface {
-	Signup(*exchange.AuthSignupReq) (*dbs.UserNewRow, error)
-	Signin(*exchange.AuthSigninReq) (*exchange.AuthSigninRes, error)
+	Signup(*exchange.AuthSignupReq) (*exchange.AuthUserSignupRes, error)
+	Signin(*exchange.AuthSigninReq) (*exchange.AuthUserSigninRes, error)
 	RefreshTokens(*exchange.AuthTokenRefreshReq) (*exchange.AuthTokens, error)
 	InvalidateToken(*exchange.AuthTokenInvalidateReq) error
-	ResetPassword(*exchange.AuthPasswordResetReq) error
+	ResetPassword(*exchange.AuthPasswordResetReq) (*exchange.AuthUserResetRes, error)
 	ChangePassword(*exchange.AuthPasswordChangeReq) error
 	Signout() (bool, error)
 }
@@ -47,7 +47,7 @@ func NewAuthService(ctx context.Context, queries *dbs.Queries) IAuthService {
 	}
 }
 
-func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, error) {
+func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*exchange.AuthUserSignupRes, error) {
 	ctx := context.Background()
 
 	// begin new transaction
@@ -75,7 +75,7 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 	}
 
 	// create contact email
-	_, err = qtx.ContactNew(ctx, &dbs.ContactNewParams{
+	contact, err := qtx.ContactNew(ctx, &dbs.ContactNewParams{
 		UserID: user.ID, Class: "email", Content: req.Email,
 	})
 	if err != nil {
@@ -83,7 +83,7 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 	}
 
 	// create default profile
-	_, err = qtx.ProfileNew(ctx, &dbs.ProfileNewParams{
+	profile, err := qtx.ProfileNew(ctx, &dbs.ProfileNewParams{
 		UserID:    user.ID,
 		Firstname: req.Firstname,
 		Lastname:  req.Lastname,
@@ -92,11 +92,32 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 		return nil, fmt.Errorf("%w: %v", common.ErrDBRecordInsert, err)
 	}
 
+	// build the result response
+	res := &exchange.AuthUserSignupRes{
+		User: &exchange.AuthUserSignup{
+			ID:        user.ID,
+			Username:  user.Username,
+			CreatedAt: user.CreatedAt,
+		},
+		Contact: &exchange.AuthUserContact{
+			ID:        contact.ID,
+			Class:     contact.Class,
+			Content:   contact.Content,
+			CreatedAt: contact.CreatedAt,
+		},
+		Profile: &exchange.AuthUserProfile{
+			ID:        profile.ID,
+			Firstname: profile.Firstname,
+			Lastname:  profile.Lastname,
+			CreatedAt: profile.CreatedAt,
+		},
+	}
+
 	// encode user data and publish the event to the nats topic
 	encoder, _ := provider.EncoderFactory(
 		rcv.envProvider.GetString("ENCODER_STRATEGY", provider.DefEncoderStrategy),
 	)
-	data, _ := encoder.Encode(user)
+	data, _ := encoder.Encode(res)
 	nats := rcv.natsProvider.Connection()
 	if err := nats.Publish(string(common.TopicUserRegistrationEmail), data); err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrNatsPublishTopic, err)
@@ -106,10 +127,10 @@ func (rcv *AuthService) Signup(req *exchange.AuthSignupReq) (*dbs.UserNewRow, er
 	if err := trx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrDBTrxError, err)
 	}
-	return user, nil
+	return res, nil
 }
 
-func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthSigninRes, error) {
+func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthUserSigninRes, error) {
 	ctx := context.Background()
 
 	// check user password
@@ -151,8 +172,8 @@ func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthSigni
 	}
 
 	// response about logged in user
-	res := &exchange.AuthSigninRes{
-		User: &exchange.AuthUser{
+	res := &exchange.AuthUserSigninRes{
+		User: &exchange.AuthUserSignin{
 			ID:        updated.ID,
 			Username:  updated.Username,
 			CheckedAt: updated.CheckedAt,
@@ -188,13 +209,62 @@ func (rcv *AuthService) InvalidateToken(req *exchange.AuthTokenInvalidateReq) er
 	return nil
 }
 
-func (rcv *AuthService) ResetPassword(*exchange.AuthPasswordResetReq) error {
-	// get the user credentials
-	// check for blocked, checked
-	// generate new tokens for temporary access
-	// send email for confirmation
+func (rcv *AuthService) ResetPassword(req *exchange.AuthPasswordResetReq) (*exchange.AuthUserResetRes, error) {
+	ctx := context.Background()
 
-	return nil
+	// get the user credentials
+	user, err := rcv.queries.ContactSelectUserByClass(ctx, &dbs.ContactSelectUserByClassParams{
+		Class:   common.EnumContactClassEmail,
+		Content: req.Email,
+	})
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("%w: %v", common.ErrDBNotFound, err)
+		} else {
+			return nil, fmt.Errorf("%w: %v", common.ErrDBRecordSelect, err)
+		}
+	}
+
+	// check for blocked, checked
+	if user.IsBlocked {
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthUserBlocked, errors.New("block status detected"))
+	}
+	if !user.IsChecked {
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthUserNotChecked, errors.New("email check required"))
+	}
+
+	// generate new tokens for temporary access
+	accessToken, refreshToken, err := rcv.jwtProvider.GenerateTokens(user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrAuthGenerateTokens, err)
+	}
+
+	// build the result response
+	res := &exchange.AuthUserResetRes{
+		User: &exchange.AuthUserReset{
+			ID:        user.ID,
+			Email:     user.Email,
+			Username:  user.Username,
+			CheckedAt: user.CheckedAt,
+			VisitedAt: user.VisitedAt,
+			CreatedAt: user.CreatedAt,
+		},
+		Tokens: &exchange.AuthTokens{
+			Access:  accessToken,
+			Refresh: refreshToken,
+		},
+	}
+
+	// encode user data and publish the event to the nats topic
+	encoder, _ := provider.EncoderFactory(
+		rcv.envProvider.GetString("ENCODER_STRATEGY", provider.DefEncoderStrategy),
+	)
+	data, _ := encoder.Encode(res)
+	nats := rcv.natsProvider.Connection()
+	if err := nats.Publish(string(common.TopicUserResetPasswordEmail), data); err != nil {
+		return nil, fmt.Errorf("%w: %v", common.ErrNatsPublishTopic, err)
+	}
+	return res, nil
 }
 
 func (rcv *AuthService) ChangePassword(*exchange.AuthPasswordChangeReq) error {

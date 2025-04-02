@@ -234,42 +234,51 @@ func (q *Queries) ContactSelectByUserIDClass(ctx context.Context, arg *ContactSe
 	return items, nil
 }
 
-const contactSelectUserByEmail = `-- name: ContactSelectUserByEmail :one
-select u.id, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at
+const contactSelectUserByClass = `-- name: ContactSelectUserByClass :one
+select u.id, c.content as email, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at, u.created_at
   from users u
   join contact c on u.id = c.user_id
-where c.class = 'email'
-  and c.content = $1
+where c.class = $1
+  and c.content = $2
 `
 
-type ContactSelectUserByEmailRow struct {
+type ContactSelectUserByClassParams struct {
+	Class   string `json:"class"`
+	Content string `json:"content"`
+}
+
+type ContactSelectUserByClassRow struct {
 	ID        string           `json:"id"`
+	Email     string           `json:"email"`
 	Username  string           `json:"username"`
 	IsBlocked bool             `json:"is_blocked"`
 	BlockedAt pgtype.Timestamp `json:"blocked_at"`
 	IsChecked bool             `json:"is_checked"`
 	CheckedAt pgtype.Timestamp `json:"checked_at"`
 	VisitedAt pgtype.Timestamp `json:"visited_at"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
 }
 
-// ContactSelectUserByEmail
+// ContactSelectUserByClass
 //
-//	select u.id, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at
+//	select u.id, c.content as email, u.username, u.is_blocked, u.blocked_at, u.is_checked, u.checked_at, u.visited_at, u.created_at
 //	  from users u
 //	  join contact c on u.id = c.user_id
-//	where c.class = 'email'
-//	  and c.content = $1
-func (q *Queries) ContactSelectUserByEmail(ctx context.Context, content string) (*ContactSelectUserByEmailRow, error) {
-	row := q.db.QueryRow(ctx, contactSelectUserByEmail, content)
-	var i ContactSelectUserByEmailRow
+//	where c.class = $1
+//	  and c.content = $2
+func (q *Queries) ContactSelectUserByClass(ctx context.Context, arg *ContactSelectUserByClassParams) (*ContactSelectUserByClassRow, error) {
+	row := q.db.QueryRow(ctx, contactSelectUserByClass, arg.Class, arg.Content)
+	var i ContactSelectUserByClassRow
 	err := row.Scan(
 		&i.ID,
+		&i.Email,
 		&i.Username,
 		&i.IsBlocked,
 		&i.BlockedAt,
 		&i.IsChecked,
 		&i.CheckedAt,
 		&i.VisitedAt,
+		&i.CreatedAt,
 	)
 	return &i, err
 }

@@ -52,7 +52,7 @@ var (
 	ErrEmailTemplateRendering = errors.New("failed to render template")
 
 	// Nats layer errors
-	ErrNatsPublishTopic = errors.New("failed to public message")
+	ErrNatsPublishTopic = errors.New("failed to publish message")
 
 	// Business layer errors
 

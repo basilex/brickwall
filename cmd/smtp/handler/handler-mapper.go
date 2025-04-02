@@ -6,5 +6,6 @@ import (
 )
 
 var HandlerMapper = map[string]provider.MessageHandler{
-	string(common.TopicUserRegistrationEmail): UserRegistrationEmail,
+	string(common.TopicUserRegistrationEmail):  UserRegistrationEmail,
+	string(common.TopicUserResetPasswordEmail): UserResetPasswordEmail,
 }

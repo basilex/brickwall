@@ -139,13 +139,12 @@ func (rcv *AuthController) AuthResetPassword(c *gin.Context) {
 		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrReqBindJson, err)))
 		return
 	}
-	if err := rcv.authService.ResetPassword(req); err != nil {
+	res, err := rcv.authService.ResetPassword(req)
+	if err != nil {
 		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrAuthResetPassword, err)))
 		return
 	}
-	c.JSON(http.StatusOK, common.NewResponse(
-		gin.H{"message": "confirmation email sent"}),
-	)
+	c.JSON(http.StatusOK, common.NewResponse(res))
 }
 
 func (rcv *AuthController) AuthChangePassword(c *gin.Context) {

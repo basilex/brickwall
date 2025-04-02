@@ -9,10 +9,10 @@ POST {{baseurl}}/signup HTTP/1.1
 Content-Type: {{contentType}}
 
 {
-    "email": "chapa@gmail.com",
+    "email": "hacker@mail.io",
     "password": "12345678",
-    "firstname": "Chapa",
-    "lastname": "Svetlanovna"
+    "firstname": "Hacker",
+    "lastname": "Fury"
 }
 
 ### AuthSignin
