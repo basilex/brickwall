@@ -157,7 +157,7 @@ func (rcv *AuthService) Signin(req *exchange.AuthSigninReq) (*exchange.AuthUserS
 	}
 
 	// generate tokens
-	accessToken, refreshToken, err := rcv.jwtProvider.GenerateTokens(user.ID)
+	accessToken, refreshToken, err := rcv.jwtProvider.GenerateAllTokens(user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrAuthGenerateTokens, err)
 	}
@@ -247,7 +247,7 @@ func (rcv *AuthService) ResetPassword(req *exchange.AuthPasswordResetReq) (*exch
 	}
 
 	// generate new tokens for temporary access
-	accessToken, refreshToken, err := rcv.jwtProvider.GenerateTokens(user.ID)
+	accessToken, refreshToken, err := rcv.jwtProvider.GenerateAllTokens(user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", common.ErrAuthGenerateTokens, err)
 	}

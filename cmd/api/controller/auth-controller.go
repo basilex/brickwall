@@ -109,6 +109,10 @@ func (rcv *AuthController) AuthRefreshToken(c *gin.Context) {
 		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrReqBindJson, err)))
 		return
 	}
+
+	// validate refresh token
+
+	// refresh the tokens
 	res, err := rcv.authService.RefreshTokens(req)
 	if err != nil {
 		c.JSON(common.ErrMapper(fmt.Errorf("%w: %v", common.ErrAuthGenerateTokens, err)))

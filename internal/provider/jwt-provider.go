@@ -7,12 +7,16 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/xid"
 
 	"brickwall/internal/common"
 )
 
 type IJwtProvider interface {
-	GenerateTokens(string) (string, string, error)
+	GenerateAllTokens(string) (string, string, error)
+	GenerateAccessToken(userID string) (string, error)
+	GenerateRefreshToken(userID string) (string, error)
+
 	RefreshTokens(string) (string, string, error)
 	ValidateToken(string) (*Claims, error)
 	InvalidateToken(string) error
@@ -47,35 +51,75 @@ func NewJwtProvider(ctx context.Context) IJwtProvider {
 	}
 }
 
-func (rcv *JwtProvider) GenerateTokens(userID string) (string, string, error) {
-	AccessExpiration := time.Now().Add(rcv.accessExpiration)
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
-		UserID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(AccessExpiration),
-		},
-	})
-	signedAccessToken, err := accessToken.SignedString([]byte(rcv.secret))
+/////////////////////////////////////////////////////////////////////////////// old
+
+// func (rcv *JwtProvider) GenerateTokens(userID string) (string, string, error) {
+// 	// access token
+// 	accessExpiration := time.Now().Add(rcv.accessExpiration)
+// 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
+// 		UserID: userID,
+// 		RegisteredClaims: jwt.RegisteredClaims{
+// 			ID:        xid.New().String(),
+// 			ExpiresAt: jwt.NewNumericDate(accessExpiration),
+// 		},
+// 	})
+// 	signedAccessToken, err := accessToken.SignedString([]byte(rcv.secret))
+// 	if err != nil {
+// 		return "", "", fmt.Errorf("%w: %v", common.ErrJwtTokenSigning, err)
+// 	}
+
+// 	// refresh token
+// 	refreshExpiration := time.Now().Add(rcv.refreshExpiration)
+// 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+// 		ID:        xid.New().String(),
+// 		ExpiresAt: jwt.NewNumericDate(refreshExpiration),
+// 	})
+// 	signedRefreshToken, err := refreshToken.SignedString([]byte(rcv.secret))
+// 	if err != nil {
+// 		return "", "", fmt.Errorf("%w: %v", common.ErrJwtTokenSigning, err)
+// 	}
+// 	return signedAccessToken, signedRefreshToken, nil
+// }
+
+// ///////////////////////////////////////////////////////////////////////////// new start
+func (rcv *JwtProvider) GenerateAllTokens(userID string) (string, string, error) {
+	access, err := rcv.GenerateAccessToken(userID)
 	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", common.ErrJwtTokenSigning, err)
+		return "", "", err
 	}
-	refreshExpiration := time.Now().Add(rcv.refreshExpiration)
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(refreshExpiration),
-	})
-	signedRefreshToken, err := refreshToken.SignedString([]byte(rcv.secret))
+	refresh, err := rcv.GenerateRefreshToken(userID)
 	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", common.ErrJwtTokenSigning, err)
+		return "", "", err
 	}
-	return signedAccessToken, signedRefreshToken, nil
+	return access, refresh, nil
 }
+
+func (rcv *JwtProvider) GenerateAccessToken(userID string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": userID,
+		"jti": xid.New().String(),
+		"exp": time.Now().Add(rcv.accessExpiration),
+	})
+	return token.SignedString([]byte(rcv.secret))
+}
+
+func (rcv *JwtProvider) GenerateRefreshToken(userID string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": userID,
+		"jti": xid.New().String(),
+		"exp": time.Now().Add(rcv.refreshExpiration),
+	})
+	return token.SignedString([]byte(rcv.secret))
+}
+
+/////////////////////////////////////////////////////////////////////////////// new end
 
 func (rcv *JwtProvider) RefreshTokens(tokenString string) (string, string, error) {
 	claims, err := rcv.ValidateToken(tokenString)
 	if err != nil {
 		return "", "", fmt.Errorf("%w: %v", common.ErrJwtTokenInvalid, err)
 	}
-	return rcv.GenerateTokens(claims.UserID)
+	return rcv.GenerateAllTokens(claims.UserID)
 }
 
 func (rcv *JwtProvider) ValidateToken(tokenString string) (*Claims, error) {
@@ -83,7 +127,7 @@ func (rcv *JwtProvider) ValidateToken(tokenString string) (*Claims, error) {
 	if err == nil && val == common.JwtTokenInvalid {
 		return nil, fmt.Errorf("%w: %v", common.ErrJwtTokenInvalidated, "marked as invalid")
 	}
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (any, error) {
 		return rcv.secret, nil
 	})
 	if err != nil {
